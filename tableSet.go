@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/farseer-go/fs/core"
+	"github.com/farseer-go/collections"
 	"gorm.io/gorm"
 	"time"
 )
@@ -108,12 +108,12 @@ func (table *TableSet[Table]) ToList() []Table {
 }
 
 // ToPageList 返回分页结果集
-func (table *TableSet[Table]) ToPageList(pageSize int, pageIndex int) core.PageList[Table] {
+func (table *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collections.PageList[Table] {
 	offset := (pageIndex - 1) * pageSize
 	var lst []Table
 	table.data().Offset(offset).Limit(pageSize).Find(&lst)
 
-	return core.NewPageList[Table](lst, table.Count())
+	return collections.NewPageList[Table](lst, table.Count())
 }
 
 // ToEntity 返回单个对象
@@ -162,10 +162,12 @@ func (table *TableSet[Table]) Delete() int64 {
 // GetString 获取单条记录中的单个string类型字段值
 func (table *TableSet[Table]) GetString(fieldName string) string {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val string
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
@@ -175,10 +177,12 @@ func (table *TableSet[Table]) GetString(fieldName string) string {
 // GetInt 获取单条记录中的单个int类型字段值
 func (table *TableSet[Table]) GetInt(fieldName string) int {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val int
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
@@ -188,10 +192,12 @@ func (table *TableSet[Table]) GetInt(fieldName string) int {
 // GetLong 获取单条记录中的单个int64类型字段值
 func (table *TableSet[Table]) GetLong(fieldName string) int64 {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val int64
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
@@ -201,10 +207,12 @@ func (table *TableSet[Table]) GetLong(fieldName string) int64 {
 // GetBool 获取单条记录中的单个bool类型字段值
 func (table *TableSet[Table]) GetBool(fieldName string) bool {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val bool
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
@@ -214,10 +222,12 @@ func (table *TableSet[Table]) GetBool(fieldName string) bool {
 // GetFloat32 获取单条记录中的单个float32类型字段值
 func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val float32
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
@@ -227,10 +237,12 @@ func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
 // GetFloat64 获取单条记录中的单个float64类型字段值
 func (table *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	rows, _ := table.data().Select(fieldName).Limit(1).Rows()
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var val float64
 	for rows.Next() {
-		rows.Scan(&val)
+		_ = rows.Scan(&val)
 		// ScanRows 方法用于将一行记录扫描至结构体
 		//table.data().ScanRows(rows, &user)
 	}
