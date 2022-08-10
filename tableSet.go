@@ -101,7 +101,14 @@ func (table *TableSet[Table]) Limit(limit int) *TableSet[Table] {
 }
 
 // ToList 返回结果集
-func (table *TableSet[Table]) ToList() []Table {
+func (table *TableSet[Table]) ToList() collections.List[Table] {
+	var lst []Table
+	table.data().Find(&lst)
+	return collections.NewList(lst...)
+}
+
+// ToArray 返回结果集
+func (table *TableSet[Table]) ToArray() []Table {
 	var lst []Table
 	table.data().Find(&lst)
 	return lst
@@ -113,7 +120,7 @@ func (table *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collection
 	var lst []Table
 	table.data().Offset(offset).Limit(pageSize).Find(&lst)
 
-	return collections.NewPageList[Table](lst, table.Count())
+	return collections.NewPageList[Table](collections.NewList(lst...), table.Count())
 }
 
 // ToEntity 返回单个对象
