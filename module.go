@@ -16,6 +16,7 @@ func (module Module) Initialize() {
 }
 
 func (module Module) PostInitialize() {
+	checkConfig()
 }
 
 func (module Module) Shutdown() {
