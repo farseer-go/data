@@ -38,7 +38,7 @@ func (table *TableSet[Table]) GetTableName() string {
 
 // 初始化Orm
 func (table *TableSet[Table]) data() *gorm.DB {
-	if table.db == nil { // Data Source Name，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
+	if table.db == nil { // Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 		table.db, table.err = gorm.Open(table.dbContext.getDriver(), &gorm.Config{})
 		if table.err != nil {
 			panic(table.err.Error())
