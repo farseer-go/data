@@ -50,13 +50,21 @@ func checkConfig() {
 // NewContext 数据库上下文初始化
 // dbName：数据库配置名称
 func NewContext[TDbContext any](dbName string) *TDbContext {
+	var context TDbContext
+	InitContext(&context, dbName)
+	return &context
+}
+
+// InitContext 数据库上下文初始化
+// dbName：数据库配置名称
+func InitContext[TDbContext any](dbContext *TDbContext, dbName string) {
 	if dbName == "" {
 		panic("dbName入参必须设置有效的值")
 	}
 	dbConfig := initConfig(dbName) // 嵌入类型
 	//var dbName string       // 数据库配置名称
-	customContext := new(TDbContext)
-	contextValueOf := reflect.ValueOf(customContext).Elem()
+
+	contextValueOf := reflect.ValueOf(dbContext).Elem()
 
 	for i := 0; i < contextValueOf.NumField(); i++ {
 		field := contextValueOf.Field(i)
@@ -75,7 +83,6 @@ func NewContext[TDbContext any](dbName string) *TDbContext {
 		// 再取tableSet的子属性，并设置值
 		field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
 	}
-	return customContext
 }
 
 // 获取对应驱动

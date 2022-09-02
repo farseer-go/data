@@ -18,9 +18,30 @@ type UserPO struct {
 	Age int
 }
 
-func TestInit(t *testing.T) {
+func TestNewContext(t *testing.T) {
 	// 设置配置默认值，模拟配置文件
 	configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+
 	context := NewContext[TestMysqlContext]("test")
-	assert.Equal(t, context.User.GetTableName(), "user")
+
+	assert.Equal(t, "user", context.User.GetTableName())
+}
+
+func TestInitContext(t *testing.T) {
+	// 设置配置默认值，模拟配置文件
+	configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+
+	var context TestMysqlContext
+	InitContext(&context, "test")
+	assert.Equal(t, "user", context.User.GetTableName())
+
+	InitContext(&context, "test")
+	assert.Equal(t, "user", context.User.GetTableName())
+
+	context2 := new(TestMysqlContext)
+	InitContext(context2, "test")
+	assert.Equal(t, "user", context2.User.GetTableName())
+
+	InitContext(context2, "test")
+	assert.Equal(t, "user", context2.User.GetTableName())
 }
