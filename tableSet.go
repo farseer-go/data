@@ -43,7 +43,7 @@ func (table *TableSet[Table]) data() *gorm.DB {
 		if table.err != nil {
 			panic(table.err.Error())
 		}
-		table.db.Table(table.tableName)
+		table.db = table.db.Table(table.tableName)
 		table.setPool()
 	}
 	return table.db
