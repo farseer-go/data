@@ -228,8 +228,6 @@ func (table *TableSet[Table]) GetInt(fieldName string) int {
 	var val int
 	for rows.Next() {
 		_ = rows.Scan(&val)
-		// ScanRows 方法用于将一行记录扫描至结构体
-		//table.ScanRows(rows, &user)
 	}
 	return val
 }
@@ -244,8 +242,6 @@ func (table *TableSet[Table]) GetLong(fieldName string) int64 {
 	var val int64
 	for rows.Next() {
 		_ = rows.Scan(&val)
-		// ScanRows 方法用于将一行记录扫描至结构体
-		//table.ScanRows(rows, &user)
 	}
 	return val
 }
@@ -260,8 +256,6 @@ func (table *TableSet[Table]) GetBool(fieldName string) bool {
 	var val bool
 	for rows.Next() {
 		_ = rows.Scan(&val)
-		// ScanRows 方法用于将一行记录扫描至结构体
-		//table.ScanRows(rows, &user)
 	}
 	return val
 }
@@ -276,8 +270,6 @@ func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
 	var val float32
 	for rows.Next() {
 		_ = rows.Scan(&val)
-		// ScanRows 方法用于将一行记录扫描至结构体
-		//table.ScanRows(rows, &user)
 	}
 	return val
 }
@@ -292,8 +284,6 @@ func (table *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	var val float64
 	for rows.Next() {
 		_ = rows.Scan(&val)
-		// ScanRows 方法用于将一行记录扫描至结构体
-		//table.ScanRows(rows, &user)
 	}
 	return val
 }

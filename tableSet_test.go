@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestTableSet_ToList(t *testing.T) {
+func TestTableSet(t *testing.T) {
 	// 设置配置默认值，模拟配置文件
 	configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
 	Module{}.Shutdown()
@@ -127,4 +127,28 @@ func TestTableSet_ToList(t *testing.T) {
 		assert.Equal(t, 0, user.Specialty.Count())
 	})
 
+	t.Run("IsExists", func(t *testing.T) {
+		assert.True(t, context.User.Where("Name = ?", "steden").IsExists())
+		assert.False(t, context.User.Where("Name = ?", "steden2").IsExists())
+	})
+
+	t.Run("GetString", func(t *testing.T) {
+		assert.Equal(t, "steden", context.User.Where("Name = ?", "steden").GetString("Name"))
+	})
+
+	t.Run("GetInt", func(t *testing.T) {
+		assert.Less(t, 1, context.User.Where("Name = ?", "steden").GetInt("Id"))
+	})
+
+	t.Run("GetLong", func(t *testing.T) {
+		assert.Less(t, int64(1), context.User.Where("Name = ?", "steden").GetLong("Id"))
+	})
+
+	t.Run("GetFloat32", func(t *testing.T) {
+		assert.Less(t, float32(1), context.User.Where("Name = ?", "steden").GetFloat32("Id"))
+	})
+
+	t.Run("GetFloat64", func(t *testing.T) {
+		assert.Less(t, float64(1), context.User.Where("Name = ?", "steden").GetFloat64("Id"))
+	})
 }
