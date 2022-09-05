@@ -196,4 +196,21 @@ func TestTableSet(t *testing.T) {
 		assert.Equal(t, "lao_he", user.Fullname.FirstName)
 		assert.Equal(t, "niao", user.Fullname.LastName)
 	})
+
+	t.Run("Update", func(t *testing.T) {
+		user := context.User.Where("Name = ?", "steden").ToEntity()
+		user.Age = 15
+		user.Fullname = FullNameVO{
+			FirstName: "lao",
+			LastName:  "siji",
+		}
+		user.IsEnable = false
+
+		context.User.Where("Name = ?", "steden").Update(user)
+		user = context.User.Where("Name = ?", "steden").ToEntity()
+		assert.Equal(t, 15, user.Age)
+		assert.Equal(t, "lao", user.Fullname.FirstName)
+		assert.Equal(t, "siji", user.Fullname.LastName)
+		assert.Equal(t, false, user.IsEnable)
+	})
 }

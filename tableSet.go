@@ -183,9 +183,10 @@ func (table *TableSet[Table]) Insert(po *Table) {
 }
 
 // Update 修改记录
+// 如果只更新部份字段，需使用Select进行筛选
 func (table *TableSet[Table]) Update(po Table) int64 {
 	defer table.reInit()
-	result := table.db.Updates(po)
+	result := table.db.Save(po)
 	return result.RowsAffected
 }
 
