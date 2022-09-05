@@ -68,16 +68,6 @@ func (receiver *FullNameVO) Scan(val any) error {
 	return err
 }
 
-// MarshalJSON to output non base64 encoded []byte
-//func (receiver FullNameVO) MarshalJSON() ([]byte, error) {
-//	return json.Marshal(receiver)
-//}
-
-// UnmarshalJSON to deserialize []byte
-//func (receiver *FullNameVO) UnmarshalJSON(b []byte) error {
-//	return json.Unmarshal(b, &receiver)
-//}
-
 type GenderType int
 
 const (
@@ -91,6 +81,11 @@ func TestNewContext(t *testing.T) {
 	})
 
 	assert.Panics(t, func() {
+		NewContext[TestMysqlContext]("test")
+	})
+
+	assert.Panics(t, func() {
+		configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
 		NewContext[TestMysqlContext]("test")
 	})
 
@@ -120,6 +115,7 @@ func TestInitContext(t *testing.T) {
 	context2.User.SetTableName("user2")
 	assert.Equal(t, "user2", context2.User.GetTableName())
 }
+
 func Test_checkConfig_empty(t *testing.T) {
 	assert.Panics(t, func() {
 		configure.SetDefault("Database.test", "")
