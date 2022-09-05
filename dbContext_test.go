@@ -30,6 +30,8 @@ type UserPO struct {
 	Attribute collections.Dictionary[string, string]
 	// 性别
 	Gender GenderType
+	// 是否启用
+	IsEnable bool
 }
 
 // 全称

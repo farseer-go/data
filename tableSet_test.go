@@ -34,6 +34,7 @@ func TestTableSet(t *testing.T) {
 			Specialty: collections.NewList("go", "net"),
 			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
 			Gender:    Man,
+			IsEnable:  true,
 		})
 
 		context.User.Insert(&UserPO{
@@ -46,6 +47,7 @@ func TestTableSet(t *testing.T) {
 			Specialty: collections.NewList("go", "net"),
 			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "10"}),
 			Gender:    Woman,
+			IsEnable:  false,
 		})
 
 		// 此时的数据量应该为2
@@ -62,7 +64,6 @@ func TestTableSet(t *testing.T) {
 		assert.Equal(t, 0, lst.First().Attribute.Count())
 		assert.Equal(t, "", lst.First().Fullname.FirstName)
 		assert.Equal(t, "", lst.First().Fullname.LastName)
-		assert.Equal(t, Man, lst.First().Gender)
 		assert.Equal(t, 0, lst.First().Specialty.Count())
 		assert.Less(t, 1, lst.First().Id)
 	})
@@ -72,12 +73,34 @@ func TestTableSet(t *testing.T) {
 		lst := context.User.Asc("Age").ToList()
 		assert.Equal(t, 2, lst.Count())
 		assert.Equal(t, "harlen", lst.First().Name)
+		assert.Equal(t, 34, lst.First().Age)
+		assert.Equal(t, 1, lst.First().Attribute.Count())
+		assert.Equal(t, "10", lst.First().Attribute.GetValue("work-year"))
+		assert.Equal(t, "lee", lst.First().Fullname.FirstName)
+		assert.Equal(t, "harlen", lst.First().Fullname.LastName)
+		assert.Equal(t, Woman, lst.First().Gender)
+		assert.Equal(t, 2, lst.First().Specialty.Count())
+		assert.True(t, lst.First().Specialty.Contains("go"))
+		assert.True(t, lst.First().Specialty.Contains("net"))
+		assert.False(t, lst.First().IsEnable)
+		assert.Less(t, 1, lst.First().Id)
 	})
 
 	t.Run("desc", func(t *testing.T) {
 		lst := context.User.Desc("Age").ToList()
 		assert.Equal(t, 2, lst.Count())
 		assert.Equal(t, "steden", lst.First().Name)
+		assert.Equal(t, 36, lst.First().Age)
+		assert.Equal(t, 1, lst.First().Attribute.Count())
+		assert.Equal(t, "15", lst.First().Attribute.GetValue("work-year"))
+		assert.Equal(t, "he", lst.First().Fullname.FirstName)
+		assert.Equal(t, "steden", lst.First().Fullname.LastName)
+		assert.Equal(t, Man, lst.First().Gender)
+		assert.Equal(t, 2, lst.First().Specialty.Count())
+		assert.True(t, lst.First().Specialty.Contains("go"))
+		assert.True(t, lst.First().Specialty.Contains("net"))
+		assert.True(t, lst.First().IsEnable)
+		assert.Less(t, 1, lst.First().Id)
 	})
 
 	t.Run("limit", func(t *testing.T) {
@@ -90,6 +113,8 @@ func TestTableSet(t *testing.T) {
 		assert.Equal(t, "steden", lst.First().Fullname.LastName)
 		assert.Equal(t, Man, lst.First().Gender)
 		assert.Equal(t, 2, lst.First().Specialty.Count())
+		assert.True(t, lst.First().Specialty.Contains("go"))
+		assert.True(t, lst.First().Specialty.Contains("net"))
 		assert.Less(t, 1, lst.First().Id)
 	})
 
@@ -150,5 +175,10 @@ func TestTableSet(t *testing.T) {
 
 	t.Run("GetFloat64", func(t *testing.T) {
 		assert.Less(t, float64(1), context.User.Where("Name = ?", "steden").GetFloat64("Id"))
+	})
+
+	t.Run("GetFloat64", func(t *testing.T) {
+		assert.True(t, context.User.Where("Name = ?", "steden").GetBool("Is_Enable"))
+		assert.False(t, context.User.Where("Name = ?", "harlen").GetBool("Is_Enable"))
 	})
 }
