@@ -50,9 +50,11 @@ func TestTableSet_ToList(t *testing.T) {
 	assert.Equal(t, int64(2), context.User.SetTableName("user").Count())
 
 	// 测试条件筛选、字段筛选
-	list := context.User.Select("Age").Select("Name").Where("Age > ?", 34).Where("Name = ?", "steden").ToList()
+	list := context.User.Select("Age").Select("Name", "Id").Where("Age > ?", 34).Where("Name = ?", "steden").ToList()
 	assert.Equal(t, 1, list.Count())
 	assert.Equal(t, "steden", list.First().Name)
+	assert.Equal(t, 36, list.First().Age)
+	assert.Less(t, 1, list.First().Id)
 
 	// 测试排序
 	lst := context.User.Asc("Age").ToList()
@@ -62,5 +64,11 @@ func TestTableSet_ToList(t *testing.T) {
 	lst = context.User.Desc("Age").ToList()
 	assert.Equal(t, 2, lst.Count())
 	assert.Equal(t, "steden", lst.First().Name)
+
+	lst = context.User.Limit(1).ToList()
+	assert.Equal(t, 1, lst.Count())
+}
+
+func TestTableSet_Limit(t *testing.T) {
 
 }

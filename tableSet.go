@@ -14,11 +14,14 @@ type TableSet[Table any] struct {
 	tableName string
 	db        *gorm.DB
 	err       error
+	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
+	selectList collections.ListAny
 }
 
 // Init 在反射的时候会调用此方法
 func (table *TableSet[Table]) Init(dbContext *DbContext, tableName string) {
 	table.dbContext = dbContext
+	table.selectList = collections.NewListAny()
 	table.reInit()
 	table.SetTableName(tableName)
 }
@@ -32,6 +35,7 @@ func (table *TableSet[Table]) reInit() *gorm.DB {
 	}
 	table.db = table.db.Table(table.tableName)
 	table.setPool()
+	table.selectList.Clear()
 	return table.db
 }
 
@@ -65,19 +69,37 @@ func (table *TableSet[Table]) setPool() {
 }
 
 // Select 筛选字段
-func (table *TableSet[Table]) Select(query interface{}, args ...interface{}) *TableSet[Table] {
-	table.db.Select(query, args...)
+func (table *TableSet[Table]) Select(query any, args ...any) *TableSet[Table] {
+	switch query.(type) {
+	case []string:
+		selects := query.([]string)
+		for _, s := range selects {
+			table.selectList.Add(s)
+		}
+	default:
+		table.selectList.Add(query)
+	}
+	if len(args) > 0 {
+		table.selectList.Add(args...)
+	}
+
+	if table.selectList.Count() > 1 {
+		args = table.selectList.RangeStart(1).ToArray()
+		table.db.Select(table.selectList.First(), args...)
+	} else {
+		table.db.Select(table.selectList.First())
+	}
 	return table
 }
 
 // Where 条件
-func (table *TableSet[Table]) Where(query interface{}, args ...interface{}) *TableSet[Table] {
+func (table *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] {
 	table.db.Where(query, args...)
 	return table
 }
 
 // Order 排序
-func (table *TableSet[Table]) Order(value interface{}) *TableSet[Table] {
+func (table *TableSet[Table]) Order(value any) *TableSet[Table] {
 	table.db.Order(value)
 	return table
 }
@@ -163,7 +185,7 @@ func (table *TableSet[Table]) Update(po Table) int64 {
 }
 
 // UpdateValue 修改单个字段
-func (table *TableSet[Table]) UpdateValue(column string, value interface{}) {
+func (table *TableSet[Table]) UpdateValue(column string, value any) {
 	defer table.reInit()
 	table.db.Update(column, value)
 }
