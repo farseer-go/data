@@ -141,10 +141,15 @@ func (table *TableSet[Table]) ToArray() []Table {
 // ToPageList 返回分页结果集
 func (table *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collections.PageList[Table] {
 	defer table.reInit()
+
+	var count int64
+	table.db.Count(&count)
+
 	offset := (pageIndex - 1) * pageSize
 	var lst []Table
 	table.db.Offset(offset).Limit(pageSize).Find(&lst)
-	return collections.NewPageList[Table](collections.NewList(lst...), table.Count())
+
+	return collections.NewPageList[Table](collections.NewList(lst...), count)
 }
 
 // ToEntity 返回单个对象

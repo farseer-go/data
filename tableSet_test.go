@@ -55,7 +55,7 @@ func TestTableSet_ToList(t *testing.T) {
 
 	// 测试条件筛选、字段筛选
 	t.Run("select", func(t *testing.T) {
-		lst := context.User.Select("Age").Select("Name", "Id").Where("Age > ?", 34).Where("Name = ?", "steden").ToList()
+		lst := context.User.Select("Age").Select("Name", "Id").Select([]string{"Name", "Id"}).Where("Age > ?", 34).Where("Name = ?", "steden").ToList()
 		assert.Equal(t, 1, lst.Count())
 		assert.Equal(t, "steden", lst.First().Name)
 		assert.Equal(t, 36, lst.First().Age)
@@ -92,8 +92,39 @@ func TestTableSet_ToList(t *testing.T) {
 		assert.Equal(t, 2, lst.First().Specialty.Count())
 		assert.Less(t, 1, lst.First().Id)
 	})
-}
 
-func TestTableSet_Limit(t *testing.T) {
+	t.Run("toArray", func(t *testing.T) {
+		lst := context.User.ToArray()
+		assert.Equal(t, 2, len(lst))
+	})
+
+	t.Run("ToPageList", func(t *testing.T) {
+		lst := context.User.Where("Age > 10").Asc("Age").ToPageList(1, 1)
+		assert.Equal(t, int64(2), lst.RecordCount)
+		assert.Equal(t, 1, lst.List.Count())
+		assert.Equal(t, "harlen", lst.List.First().Name)
+
+		lst = context.User.Where("Age > 10").Asc("Age").ToPageList(1, 2)
+		assert.Equal(t, int64(2), lst.RecordCount)
+		assert.Equal(t, 1, lst.List.Count())
+		assert.Equal(t, "steden", lst.List.First().Name)
+
+		lst = context.User.Where("Age > 10").Desc("Age").ToPageList(1, 1)
+		assert.Equal(t, int64(2), lst.RecordCount)
+		assert.Equal(t, 1, lst.List.Count())
+		assert.Equal(t, "steden", lst.List.First().Name)
+	})
+
+	t.Run("ToEntity", func(t *testing.T) {
+		user := context.User.Where("Name = ?", "steden").Select("Id", "Name", "Age").ToEntity()
+		assert.Equal(t, "steden", user.Name)
+		assert.Equal(t, 36, user.Age)
+		assert.Less(t, 1, user.Id)
+		assert.Equal(t, 0, user.Attribute.Count())
+		assert.Equal(t, "", user.Fullname.FirstName)
+		assert.Equal(t, "", user.Fullname.LastName)
+		assert.Equal(t, Man, user.Gender)
+		assert.Equal(t, 0, user.Specialty.Count())
+	})
 
 }
