@@ -62,26 +62,22 @@ func InitContext[TDbContext any](dbContext *TDbContext, dbName string) {
 		panic("dbName入参必须设置有效的值")
 	}
 	dbConfig := initConfig(dbName) // 嵌入类型
-	//var dbName string       // 数据库配置名称
-
 	contextValueOf := reflect.ValueOf(dbContext).Elem()
 
 	for i := 0; i < contextValueOf.NumField(); i++ {
 		field := contextValueOf.Field(i)
 		fieldType := field.Type().String()
-		if !field.CanSet() || !strings.HasPrefix(fieldType, "data.TableSet[") {
-			continue
+		if field.CanSet() && strings.HasPrefix(fieldType, "data.TableSet[") {
+			data := contextValueOf.Type().Field(i).Tag.Get("data")
+			var tableName string
+			if strings.HasPrefix(data, "name=") {
+				tableName = data[len("name="):]
+			}
+			if tableName != "" {
+				// 再取tableSet的子属性，并设置值
+				field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
+			}
 		}
-		data := contextValueOf.Type().Field(i).Tag.Get("data")
-		var tableName string
-		if strings.HasPrefix(data, "name=") {
-			tableName = data[len("name="):]
-		}
-		if tableName == "" {
-			continue
-		}
-		// 再取tableSet的子属性，并设置值
-		field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
 	}
 }
 

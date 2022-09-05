@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/fs"
 	"github.com/farseer-go/fs/configure"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -85,6 +86,14 @@ const (
 )
 
 func TestNewContext(t *testing.T) {
+	assert.Panics(t, func() {
+		NewContext[TestMysqlContext]("")
+	})
+
+	assert.Panics(t, func() {
+		NewContext[TestMysqlContext]("test")
+	})
+
 	// 设置配置默认值，模拟配置文件
 	configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
 	context := NewContext[TestMysqlContext]("test")
@@ -110,4 +119,43 @@ func TestInitContext(t *testing.T) {
 	assert.Equal(t, "user", context2.User.GetTableName())
 	context2.User.SetTableName("user2")
 	assert.Equal(t, "user2", context2.User.GetTableName())
+}
+func Test_checkConfig_empty(t *testing.T) {
+	assert.Panics(t, func() {
+		configure.SetDefault("Database.test", "")
+		fs.Initialize[Module]("test data")
+	})
+}
+
+func Test_checkConfig_emptyConnection(t *testing.T) {
+	assert.Panics(t, func() {
+		configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1")
+		fs.Initialize[Module]("test data")
+	})
+}
+
+func Test_checkConfig_emptyDataType(t *testing.T) {
+	assert.Panics(t, func() {
+		configure.SetDefault("Database.test", "PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+		fs.Initialize[Module]("test data")
+	})
+}
+
+func Test_checkConfig_unknownDataType(t *testing.T) {
+	assert.Panics(t, func() {
+		configure.SetDefault("Database.test", "DataType=oracle,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+		NewContext[TestMysqlContext]("test")
+	})
+}
+
+func Test_checkConfig(t *testing.T) {
+	//configure.SetDefault("Database.test", "DataType=postgresql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+	//NewContext[TestMysqlContext]("test")
+
+	//configure.SetDefault("Database.test", "DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+	//NewContext[TestMysqlContext]("test")
+
+	//configure.SetDefault("Database.test", "DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
+	//NewContext[TestMysqlContext]("test")
+
 }
