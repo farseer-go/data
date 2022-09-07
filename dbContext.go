@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/farseer-go/fs/configure"
+	"github.com/farseer-go/fs/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -66,8 +67,8 @@ func InitContext[TDbContext any](dbContext *TDbContext, dbName string) {
 
 	for i := 0; i < contextValueOf.NumField(); i++ {
 		field := contextValueOf.Field(i)
-		fieldType := field.Type().String()
-		if field.CanSet() && strings.HasPrefix(fieldType, "data.TableSet[") {
+		_, isDataTableSet := types.IsDataTableSet(field)
+		if field.CanSet() && isDataTableSet {
 			data := contextValueOf.Type().Field(i).Tag.Get("data")
 			var tableName string
 			if strings.HasPrefix(data, "name=") {
