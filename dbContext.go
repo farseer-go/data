@@ -67,16 +67,18 @@ func InitContext[TDbContext any](dbContext *TDbContext, dbName string) {
 
 	for i := 0; i < contextValueOf.NumField(); i++ {
 		field := contextValueOf.Field(i)
-		_, isDataTableSet := types.IsDataTableSet(field)
-		if field.CanSet() && isDataTableSet {
-			data := contextValueOf.Type().Field(i).Tag.Get("data")
-			var tableName string
-			if strings.HasPrefix(data, "name=") {
-				tableName = data[len("name="):]
-			}
-			if tableName != "" {
-				// 再取tableSet的子属性，并设置值
-				field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
+		if field.CanSet() {
+			_, isDataTableSet := types.IsDataTableSet(field)
+			if isDataTableSet {
+				data := contextValueOf.Type().Field(i).Tag.Get("data")
+				var tableName string
+				if strings.HasPrefix(data, "name=") {
+					tableName = data[len("name="):]
+				}
+				if tableName != "" {
+					// 再取tableSet的子属性，并设置值
+					field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
+				}
 			}
 		}
 	}

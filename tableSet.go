@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"time"
 )
@@ -31,6 +32,7 @@ func (table *TableSet[Table]) reInit() *gorm.DB {
 	// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 	table.db, table.err = gorm.Open(table.dbContext.getDriver(), &gorm.Config{})
 	if table.err != nil {
+		flog.Error(table.err.Error())
 		panic(table.err.Error())
 	}
 	table.db = table.db.Table(table.tableName)
