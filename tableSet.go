@@ -13,39 +13,95 @@ type TableSet[Table any] struct {
 	dbContext *DbContext
 	// 表名
 	tableName string
-	db        *gorm.DB
+	gormDB    *gorm.DB
 	err       error
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
 	selectList collections.ListAny
+	whereList  collections.List[whereQuery]
+	orderList  collections.ListAny
+	limit      int
+}
+
+type whereQuery struct {
+	query any
+	args  []any
 }
 
 // Init 在反射的时候会调用此方法
 func (table *TableSet[Table]) Init(dbContext *DbContext, tableName string) {
 	table.dbContext = dbContext
 	table.selectList = collections.NewListAny()
-	table.reInit()
+	table.whereList = collections.NewList[whereQuery]()
+	table.orderList = collections.NewListAny()
 	table.SetTableName(tableName)
 }
 
-// 重新初始化
-func (table *TableSet[Table]) reInit() *gorm.DB {
-	// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
-	table.db, table.err = gorm.Open(table.dbContext.getDriver(), &gorm.Config{})
-	if table.err != nil {
-		flog.Error(table.err.Error())
-		panic(table.err.Error())
+// 连接数据库
+func (table *TableSet[Table]) open() *gorm.DB {
+	if table.gormDB == nil {
+		// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
+		table.gormDB, table.err = gorm.Open(table.dbContext.getDriver(), &gorm.Config{
+			SkipDefaultTransaction: true,
+		})
+		if table.err != nil {
+			flog.Error(table.err.Error())
+			panic(table.err.Error())
+		}
+		table.gormDB = table.gormDB.Table(table.tableName)
+		table.setPool()
+
+		// 设置Select
+		if table.selectList.Any() {
+			lst := table.selectList.Distinct()
+			if lst.Count() > 1 {
+				args := lst.RangeStart(1).ToArray()
+				table.gormDB.Select(lst.First(), args...)
+			} else {
+				table.gormDB.Select(lst.First())
+			}
+		}
+
+		// 设置Where
+		if table.whereList.Any() {
+			for _, query := range table.whereList.ToArray() {
+				table.gormDB = table.gormDB.Where(query.query, query.args...)
+			}
+		}
+
+		// 设置Order
+		if table.orderList.Any() {
+			for _, order := range table.orderList.ToArray() {
+				table.gormDB.Order(order)
+			}
+		}
+
+		// 设置limit
+		if table.limit > 0 {
+			table.gormDB.Limit(table.limit)
+		}
 	}
-	table.db = table.db.Table(table.tableName)
-	table.setPool()
+	return table.gormDB
+}
+
+// 关闭数据库
+func (table *TableSet[Table]) close() {
 	table.selectList.Clear()
-	return table.db
+	table.whereList.Clear()
+	table.orderList.Clear()
+	table.limit = 0
+
+	if table.gormDB != nil {
+		db, _ := table.gormDB.DB()
+		_ = db.Close()
+	}
+	table.gormDB = nil
 }
 
 // SetTableName 设置表名
 func (table *TableSet[Table]) SetTableName(tableName string) *TableSet[Table] {
 	table.tableName = tableName
-	if table.db != nil {
-		table.db.Table(table.tableName)
+	if table.gormDB != nil {
+		table.gormDB.Table(table.tableName)
 	}
 	return table
 }
@@ -57,7 +113,7 @@ func (table *TableSet[Table]) GetTableName() string {
 
 // 设置池大小
 func (table *TableSet[Table]) setPool() {
-	sqlDB, _ := table.db.DB()
+	sqlDB, _ := table.gormDB.DB()
 	// SetMaxIdleConns 设置空闲连接池中连接的最大数量
 	if table.dbContext.dbConfig.PoolMinSize > 0 {
 		sqlDB.SetMaxIdleConns(table.dbContext.dbConfig.PoolMinSize)
@@ -84,134 +140,149 @@ func (table *TableSet[Table]) Select(query any, args ...any) *TableSet[Table] {
 	if len(args) > 0 {
 		table.selectList.Add(args...)
 	}
-
-	if table.selectList.Count() > 1 {
-		args = table.selectList.RangeStart(1).ToArray()
-		table.db.Select(table.selectList.First(), args...)
-	} else {
-		table.db.Select(table.selectList.First())
-	}
 	return table
 }
 
 // Where 条件
 func (table *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] {
-	table.db.Where(query, args...)
+	table.whereList.Add(whereQuery{
+		query: query,
+		args:  args,
+	})
 	return table
 }
 
 // Order 排序
 func (table *TableSet[Table]) Order(value any) *TableSet[Table] {
-	table.db.Order(value)
+	table.orderList.Add(value)
 	return table
 }
 
 // Desc 倒序
 func (table *TableSet[Table]) Desc(fieldName string) *TableSet[Table] {
-	table.db.Order(fieldName + " desc")
+	table.orderList.Add(fieldName + " desc")
 	return table
 }
 
 // Asc 正序
 func (table *TableSet[Table]) Asc(fieldName string) *TableSet[Table] {
-	table.Order(fieldName + " asc")
+	table.orderList.Add(fieldName + " asc")
 	return table
 }
 
 // Limit 限制记录数
 func (table *TableSet[Table]) Limit(limit int) *TableSet[Table] {
-	table.db.Limit(limit)
+	table.limit = limit
 	return table
 }
 
 // ToList 返回结果集
 func (table *TableSet[Table]) ToList() collections.List[Table] {
-	defer table.reInit()
+	table.open()
+	defer table.close()
+
 	var lst []Table
-	table.db.Find(&lst)
+	table.gormDB.Find(&lst)
 	return collections.NewList(lst...)
 }
 
 // ToArray 返回结果集
 func (table *TableSet[Table]) ToArray() []Table {
-	defer table.reInit()
+	table.open()
+	defer table.close()
+
 	var lst []Table
-	table.db.Find(&lst)
+	table.gormDB.Find(&lst)
 	return lst
 }
 
 // ToPageList 返回分页结果集
 func (table *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collections.PageList[Table] {
-	defer table.reInit()
+	table.open()
+	defer table.close()
 
 	var count int64
-	table.db.Count(&count)
+	table.gormDB.Count(&count)
 
 	offset := (pageIndex - 1) * pageSize
 	var lst []Table
-	table.db.Offset(offset).Limit(pageSize).Find(&lst)
+	table.gormDB.Offset(offset).Limit(pageSize).Find(&lst)
 
 	return collections.NewPageList[Table](collections.NewList(lst...), count)
 }
 
 // ToEntity 返回单个对象
 func (table *TableSet[Table]) ToEntity() Table {
-	defer table.reInit()
+	table.open()
+	defer table.close()
+
 	var entity Table
-	table.db.Take(&entity)
+	table.gormDB.Take(&entity)
 	return entity
 }
 
 // Count 返回表中的数量
 func (table *TableSet[Table]) Count() int64 {
-	defer table.reInit()
+	table.open()
+	defer table.close()
+
 	var count int64
-	table.db.Count(&count)
+	table.gormDB.Count(&count)
 	return count
 }
 
 // IsExists 是否存在记录
 func (table *TableSet[Table]) IsExists() bool {
-	defer table.reInit()
+	table.open()
+	defer table.close()
+
 	var count int64
-	table.db.Count(&count)
+	table.gormDB.Count(&count)
 	return count > 0
 }
 
 // Insert 新增记录
 func (table *TableSet[Table]) Insert(po *Table) {
-	defer table.reInit()
-	table.db.Create(po)
+	table.open()
+	defer table.close()
+
+	table.gormDB.Create(po)
 }
 
 // Update 修改记录
 // 如果只更新部份字段，需使用Select进行筛选
 func (table *TableSet[Table]) Update(po Table) int64 {
-	defer table.reInit()
-	result := table.db.Save(po)
+	table.open()
+	defer table.close()
+
+	result := table.gormDB.Save(po)
 	return result.RowsAffected
 }
 
 // UpdateValue 修改单个字段
 func (table *TableSet[Table]) UpdateValue(column string, value any) {
-	defer table.reInit()
-	table.db.Update(column, value)
+	table.open()
+	defer table.close()
+
+	table.gormDB.Update(column, value)
 }
 
 // Delete 删除记录
 func (table *TableSet[Table]) Delete() int64 {
-	defer table.reInit()
-	result := table.db.Delete(nil)
+	table.open()
+	defer table.close()
+
+	result := table.gormDB.Delete(nil)
 	return result.RowsAffected
 }
 
 // GetString 获取单条记录中的单个string类型字段值
 func (table *TableSet[Table]) GetString(fieldName string) string {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
-	defer func() {
-		_ = rows.Close()
-	}()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
+	defer rows.Close()
 	var val string
 	for rows.Next() {
 		_ = rows.Scan(&val)
@@ -223,8 +294,10 @@ func (table *TableSet[Table]) GetString(fieldName string) string {
 
 // GetInt 获取单条记录中的单个int类型字段值
 func (table *TableSet[Table]) GetInt(fieldName string) int {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -237,8 +310,10 @@ func (table *TableSet[Table]) GetInt(fieldName string) int {
 
 // GetLong 获取单条记录中的单个int64类型字段值
 func (table *TableSet[Table]) GetLong(fieldName string) int64 {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -251,8 +326,10 @@ func (table *TableSet[Table]) GetLong(fieldName string) int64 {
 
 // GetBool 获取单条记录中的单个bool类型字段值
 func (table *TableSet[Table]) GetBool(fieldName string) bool {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -265,8 +342,10 @@ func (table *TableSet[Table]) GetBool(fieldName string) bool {
 
 // GetFloat32 获取单条记录中的单个float32类型字段值
 func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -279,8 +358,10 @@ func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
 
 // GetFloat64 获取单条记录中的单个float64类型字段值
 func (table *TableSet[Table]) GetFloat64(fieldName string) float64 {
-	defer table.reInit()
-	rows, _ := table.db.Select(fieldName).Limit(1).Rows()
+	table.open()
+	defer table.close()
+
+	rows, _ := table.gormDB.Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
 	}()

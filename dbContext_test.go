@@ -93,7 +93,7 @@ func TestNewContext(t *testing.T) {
 	t.Run("errorPwd", func(t *testing.T) {
 		assert.Panics(t, func() {
 			configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
-			NewContext[TestMysqlContext]("test")
+			NewContext[TestMysqlContext]("test").User.Count()
 		})
 	})
 
@@ -157,7 +157,7 @@ func Test_checkConfig(t *testing.T) {
 	t.Run("unknownDataType", func(t *testing.T) {
 		assert.Panics(t, func() {
 			configure.SetDefault("Database.test", "DataType=oracle,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(mysql:3306)/test?charset=utf8&parseTime=True&loc=Local")
-			NewContext[TestMysqlContext]("test")
+			NewContext[TestMysqlContext]("test").User.Count()
 		})
 	})
 
