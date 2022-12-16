@@ -34,7 +34,8 @@ func initConfig(dbName string) *DbContext {
 
 func checkConfig() {
 	nodes := configure.GetSubNodes("Database")
-	for key, configString := range nodes {
+	for key, val := range nodes {
+		configString := val.(string)
 		if configString == "" {
 			panic("[farseer.yaml]Database." + key + "，没有正确配置")
 		}
