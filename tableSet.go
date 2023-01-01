@@ -44,8 +44,7 @@ func (table *TableSet[Table]) open() *gorm.DB {
 			SkipDefaultTransaction: true,
 		})
 		if table.err != nil {
-			flog.Error(table.err.Error())
-			panic(table.err.Error())
+			panic(flog.Error(table.err.Error()))
 		}
 		table.gormDB = table.gormDB.Table(table.tableName)
 		table.setPool()
