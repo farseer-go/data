@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/farseer-go/collections v0.3.0
-	github.com/farseer-go/fs v0.5.0
+	github.com/farseer-go/fs v0.5.1-0.20230101111313-3216f37fdc4b
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/driver/sqlite v1.4.3
