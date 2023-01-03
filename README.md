@@ -17,7 +17,7 @@
 ![](https://img.shields.io/github/v/release/farseer-go/data)
 ![go-version](https://img.shields.io/github/go-mod/go-version/farseer-go/data)
 ![](https://img.shields.io/github/languages/code-size/farseer-go/data)
-[![Build](https://github.com/farseer-go/data/actions/workflows/go.yml/badge.svg)](https://github.com/farseer-go/data/actions/workflows/go.yml)
+[![Build](https://github.com/farseer-go/data/actions/workflows/build.yml/badge.svg)](https://github.com/farseer-go/data/actions/workflows/build.yml)
 ![](https://goreportcard.com/badge/github.com/farseer-go/data)
 
 ## 概述
