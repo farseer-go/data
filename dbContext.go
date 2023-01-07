@@ -24,7 +24,7 @@ func initConfig(dbName string) *DbContext {
 	if configString == "" {
 		panic("[farseer.yaml]找不到相应的配置：Database." + dbName)
 	}
-	dbConfig := configure.ParseConfig[dbConfig](configString)
+	dbConfig := configure.ParseString[dbConfig](configString)
 	dbContext := &DbContext{
 		dbConfig: &dbConfig,
 	}
@@ -39,7 +39,7 @@ func checkConfig() {
 		if configString == "" {
 			panic("[farseer.yaml]Database." + key + "，没有正确配置")
 		}
-		dbConfig := configure.ParseConfig[dbConfig](configString)
+		dbConfig := configure.ParseString[dbConfig](configString)
 		if dbConfig.ConnectionString == "" {
 			panic("[farseer.yaml]Database." + key + ".ConnectionString，没有正确配置")
 		}
