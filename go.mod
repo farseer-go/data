@@ -4,7 +4,8 @@ go 1.19
 
 require (
 	github.com/farseer-go/collections v0.3.0
-	github.com/farseer-go/fs 8805a0dcc9e20a85e8ba408c54aa031ff61ebc1d
+	github.com/farseer-go/fs v0.5.1-0.20230107135755-8805a0dcc9e2
+	github.com/stretchr/testify v1.8.1
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/driver/sqlite v1.4.3
@@ -13,6 +14,7 @@ require (
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/devfeel/mapper v0.7.10 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
@@ -31,7 +33,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/microsoft/go-mssqldb v0.18.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
