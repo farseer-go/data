@@ -4,6 +4,7 @@ import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -256,6 +257,22 @@ func (table *TableSet[Table]) Update(po Table) int64 {
 
 	result := table.gormDB.Save(po)
 	return result.RowsAffected
+}
+
+// UpdateOrInsert 记录存在时更新，不存在时插入
+func (table *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
+	table.open()
+	defer table.close()
+
+	// []string转[]clause.Column
+	var clos []clause.Column
+	for _, field := range fields {
+		clos = append(clos, clause.Column{Name: field})
+	}
+	return table.gormDB.Clauses(clause.OnConflict{
+		Columns:   clos,
+		UpdateAll: true,
+	}).Create(po).Error
 }
 
 // UpdateValue 修改单个字段
