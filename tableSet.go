@@ -241,11 +241,11 @@ func (table *TableSet[Table]) IsExists() bool {
 }
 
 // Insert 新增记录
-func (table *TableSet[Table]) Insert(po *Table) {
+func (table *TableSet[Table]) Insert(po *Table) error {
 	table.open()
 	defer table.close()
 
-	table.gormDB.Create(po)
+	return table.gormDB.Create(po).Error
 }
 
 // Update 修改记录
