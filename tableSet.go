@@ -249,6 +249,13 @@ func (table *TableSet[Table]) Insert(po *Table) error {
 	return table.gormDB.Create(po).Error
 }
 
+// Insert 新增记录
+func (table *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) error {
+	table.open()
+	defer table.close()
+	return table.gormDB.CreateInBatches(lst.ToArray(), batchSize).Error
+}
+
 // Update 修改记录
 // 如果只更新部份字段，需使用Select进行筛选
 func (table *TableSet[Table]) Update(po Table) int64 {
