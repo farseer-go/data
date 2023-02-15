@@ -2,7 +2,6 @@ package data
 
 import (
 	"github.com/farseer-go/collections"
-	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -45,7 +44,8 @@ func (table *TableSet[Table]) open() *gorm.DB {
 			SkipDefaultTransaction: true,
 		})
 		if table.err != nil {
-			flog.Panic(table.err.Error())
+			//flog.Panic(table.err.Error())
+			return table.gormDB
 		}
 		table.gormDB = table.gormDB.Table(table.tableName)
 		table.setPool()
