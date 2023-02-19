@@ -217,7 +217,7 @@ func (table *TableSet[Table]) ToEntity() Table {
 	defer table.close()
 
 	var entity Table
-	table.gormDB.Take(&entity)
+	table.gormDB.Limit(1).Find(&entity)
 	return entity
 }
 
