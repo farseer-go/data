@@ -44,7 +44,6 @@ func (table *TableSet[Table]) open() *gorm.DB {
 			SkipDefaultTransaction: true,
 		})
 		if table.err != nil {
-			//flog.Panic(table.err.Error())
 			return table.gormDB
 		}
 		table.gormDB = table.gormDB.Table(table.tableName)

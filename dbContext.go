@@ -32,23 +32,6 @@ func initConfig(dbName string) *DbContext {
 	return dbContext
 }
 
-func checkConfig() {
-	nodes := configure.GetSubNodes("Database")
-	for key, val := range nodes {
-		configString := val.(string)
-		if configString == "" {
-			panic("[farseer.yaml]Database." + key + "，没有正确配置")
-		}
-		dbConfig := configure.ParseString[dbConfig](configString)
-		if dbConfig.ConnectionString == "" {
-			panic("[farseer.yaml]Database." + key + ".ConnectionString，没有正确配置")
-		}
-		if dbConfig.DataType == "" {
-			panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
-		}
-	}
-}
-
 // NewContext 数据库上下文初始化
 // dbName：数据库配置名称
 func NewContext[TDbContext any](dbName string) *TDbContext {
@@ -76,10 +59,8 @@ func InitContext[TDbContext any](dbContext *TDbContext, dbName string) {
 				if strings.HasPrefix(data, "name=") {
 					tableName = data[len("name="):]
 				}
-				if tableName != "" {
-					// 再取tableSet的子属性，并设置值
-					field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
-				}
+				// 再取tableSet的子属性，并设置值
+				field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbConfig), reflect.ValueOf(tableName)})
 			}
 		}
 	}
