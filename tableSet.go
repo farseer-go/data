@@ -120,12 +120,11 @@ func (table *TableSet[Table]) GetTableName() string {
 // 设置池大小
 func (table *TableSet[Table]) setPool() {
 	sqlDB, _ := table.gormDB.DB()
-	// SetMaxIdleConns 设置空闲连接池中连接的最大数量
-	if table.dbContext.dbConfig.PoolMinSize > 0 {
-		sqlDB.SetMaxIdleConns(table.dbContext.dbConfig.PoolMinSize)
-	}
-	// SetMaxOpenConns 设置打开数据库连接的最大数量。
+
 	if table.dbContext.dbConfig.PoolMaxSize > 0 {
+		// SetMaxIdleConns 设置空闲连接池中连接的最大数量
+		sqlDB.SetMaxIdleConns(table.dbContext.dbConfig.PoolMaxSize / 3)
+		// SetMaxOpenConns 设置打开数据库连接的最大数量。
 		sqlDB.SetMaxOpenConns(table.dbContext.dbConfig.PoolMaxSize)
 	}
 	// SetConnMaxLifetime 设置了连接可复用的最大时间。
@@ -264,7 +263,6 @@ func (table *TableSet[Table]) IsExists() bool {
 func (table *TableSet[Table]) Insert(po *Table) error {
 	table.open()
 	defer table.close()
-
 	return table.gormDB.Create(po).Error
 }
 
