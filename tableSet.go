@@ -2,6 +2,7 @@ package data
 
 import (
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -28,12 +29,17 @@ type whereQuery struct {
 }
 
 // Init 在反射的时候会调用此方法
-func (table *TableSet[Table]) Init(dbContext *DbContext, tableName string) {
+func (table *TableSet[Table]) Init(dbContext *DbContext, tableName string, autoCreateTable bool) {
 	table.dbContext = dbContext
 	table.selectList = collections.NewListAny()
 	table.whereList = collections.NewList[whereQuery]()
 	table.orderList = collections.NewListAny()
 	table.SetTableName(tableName)
+
+	// 自动创建表
+	if autoCreateTable {
+		table.CreateTable()
+	}
 }
 
 // 连接数据库
@@ -41,7 +47,8 @@ func (table *TableSet[Table]) open() *gorm.DB {
 	if table.gormDB == nil {
 		// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 		table.gormDB, table.err = gorm.Open(table.dbContext.getDriver(), &gorm.Config{
-			SkipDefaultTransaction: true,
+			SkipDefaultTransaction:                   true,
+			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
 		})
 		if table.err != nil {
 			return table.gormDB
@@ -123,6 +130,19 @@ func (table *TableSet[Table]) setPool() {
 	}
 	// SetConnMaxLifetime 设置了连接可复用的最大时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
+}
+
+// CreateTable 创建表（如果不存在）
+// 相关链接：https://gorm.cn/zh_CN/docs/migration.html
+// 相关链接：https://gorm.cn/zh_CN/docs/indexes.html
+func (table *TableSet[Table]) CreateTable() {
+	table.open()
+	defer table.close()
+	var entity Table
+	err := table.gormDB.AutoMigrate(&entity)
+	if err != nil {
+		_ = flog.Errorf("创建表：%s 时，出错：%s", table.tableName, err.Error())
+	}
 }
 
 // Select 筛选字段
