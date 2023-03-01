@@ -7,7 +7,7 @@ type healthCheck struct {
 
 func (c *healthCheck) Check() (string, error) {
 	InitContext(c, c.name, false)
-	c.Table.open()
-	defer c.Table.close()
+	c.Table.session()
+	defer c.Table.clear()
 	return "Database." + c.name, c.Table.err
 }

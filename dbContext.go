@@ -3,11 +3,6 @@ package data
 import (
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/types"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gorm"
 	"reflect"
 	"strings"
 )
@@ -65,20 +60,4 @@ func InitContext[TDbContext any](dbContext *TDbContext, dbName string, autoCreat
 			}
 		}
 	}
-}
-
-// 获取对应驱动
-func (dbContext *DbContext) getDriver() gorm.Dialector {
-	// 参考：https://gorm.cn/zh_CN/docs/connecting_to_the_database.html
-	switch strings.ToLower(dbContext.dbConfig.DataType) {
-	case "mysql":
-		return mysql.Open(dbContext.dbConfig.ConnectionString)
-	case "postgresql":
-		return postgres.Open(dbContext.dbConfig.ConnectionString)
-	case "sqlite":
-		return sqlite.Open(dbContext.dbConfig.ConnectionString)
-	case "sqlserver":
-		return sqlserver.Open(dbContext.dbConfig.ConnectionString)
-	}
-	panic("无法识别数据库类型：" + dbContext.dbConfig.DataType)
 }

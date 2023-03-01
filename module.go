@@ -5,6 +5,7 @@ import (
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/modules"
+	"gorm.io/gorm"
 )
 
 type Module struct {
@@ -15,6 +16,7 @@ func (module Module) DependsModule() []modules.FarseerModule {
 }
 
 func (module Module) PreInitialize() {
+	databaseConn = make(map[string]*gorm.DB)
 }
 
 func (module Module) Initialize() {
