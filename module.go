@@ -18,10 +18,6 @@ func (module Module) DependsModule() []modules.FarseerModule {
 func (module Module) PreInitialize() {
 	databaseConn = make(map[string]*gorm.DB)
 }
-
-func (module Module) Initialize() {
-}
-
 func (module Module) PostInitialize() {
 	nodes := configure.GetSubNodes("Database")
 	for key, val := range nodes {
@@ -40,7 +36,4 @@ func (module Module) PostInitialize() {
 		// 注册健康检查
 		container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
 	}
-}
-
-func (module Module) Shutdown() {
 }
