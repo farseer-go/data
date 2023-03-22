@@ -142,6 +142,28 @@ func (table *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] {
 	return table
 }
 
+// WhereIgnoreLessZero 条件，自动忽略小于等于0的
+func (table *TableSet[Table]) WhereIgnoreLessZero(query any, val int) *TableSet[Table] {
+	if val > 0 {
+		table.whereList.Add(whereQuery{
+			query: query,
+			args:  []any{val},
+		})
+	}
+	return table
+}
+
+// WhereIgnoreNil 条件，自动忽略nil条件
+func (table *TableSet[Table]) WhereIgnoreNil(query any, val any) *TableSet[Table] {
+	if val != nil {
+		table.whereList.Add(whereQuery{
+			query: query,
+			args:  []any{val},
+		})
+	}
+	return table
+}
+
 // Order 排序
 func (table *TableSet[Table]) Order(value any) *TableSet[Table] {
 	table.orderList.Add(value)
@@ -168,6 +190,15 @@ func (table *TableSet[Table]) Limit(limit int) *TableSet[Table] {
 
 // ToList 返回结果集
 func (table *TableSet[Table]) ToList() collections.List[Table] {
+	defer table.clear()
+
+	var lst []Table
+	table.session().Find(&lst)
+	return collections.NewList(lst...)
+}
+
+// ToListBySql 返回结果集
+func (table *TableSet[Table]) ToListBySql() collections.List[Table] {
 	defer table.clear()
 
 	var lst []Table
@@ -354,7 +385,6 @@ func (table *TableSet[Table]) GetFloat32(fieldName string) float32 {
 // GetFloat64 获取单条记录中的单个float64类型字段值
 func (table *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	defer table.clear()
-
 	rows, _ := table.session().Select(fieldName).Limit(1).Rows()
 	defer func() {
 		_ = rows.Close()
