@@ -389,3 +389,8 @@ func (table *TableSet[Table]) ExecuteSqlToList(sql string, values ...any) collec
 	table.getOrCreateSession().getClient().Raw(sql, values...).Find(&lst)
 	return collections.NewList(lst...)
 }
+
+// Original 返回原生的对象
+func (table *TableSet[Table]) Original() *gorm.DB {
+	return table.getOrCreateSession().getClient()
+}
