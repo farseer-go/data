@@ -18,7 +18,7 @@ func TestTableSet(t *testing.T) {
 
 	t.Run("delete", func(t *testing.T) {
 		// 先清空数据
-		context.User.Where("1=1").WhereIgnoreLessZero("Id = ?", 0).WhereIgnoreNil("Id = ?", nil).Delete()
+		context.User.Where("Id > ?", 0).WhereIgnoreLessZero("Id = ?", 0).WhereIgnoreNil("Id = ?", nil).Delete()
 		// 此时的数据量应该为0
 		assert.Equal(t, int64(0), context.User.Count())
 	})
