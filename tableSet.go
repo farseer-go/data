@@ -262,6 +262,15 @@ func (table *TableSet[Table]) Update(po Table) int64 {
 	return result.RowsAffected
 }
 
+// Expr 对字段做表达式操作
+//
+//	exp: AddUp("price", "price * ? + ?", 2, 100)
+//	sql: UPDATE "xxx" SET "price" = price * 2 + 100
+func (table *TableSet[Table]) Expr(field string, expr string, args ...any) int64 {
+	result := table.getOrCreateSession().getClient().Update(field, gorm.Expr(expr, args...))
+	return result.RowsAffected
+}
+
 // UpdateOrInsert 记录存在时更新，不存在时插入
 func (table *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
 	// []string转[]clause.Column
