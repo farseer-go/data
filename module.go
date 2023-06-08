@@ -34,7 +34,7 @@ func (module Module) PostInitialize() {
 		}
 		config.dbName = key
 		// 注册上下文
-		container.RegisterInstance[core.ITransaction](&DbContext{dbConfig: &config}, key)
+		container.RegisterInstance[core.ITransaction](&InternalDbContext{dbConfig: &config}, key)
 		// 注册健康检查
 		container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
 	}
