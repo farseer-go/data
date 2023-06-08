@@ -13,6 +13,7 @@ type TableSet[Table any] struct {
 	dbContext *DbContext
 	// 表名
 	tableName string
+	// 最外层的ormClient一定是nil的
 	ormClient *gorm.DB
 	err       error
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
@@ -42,12 +43,24 @@ func (table *TableSet[Table]) Init(dbContext *DbContext, tableName string, autoC
 // 初始化一个Session
 func (table *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 	if table.ormClient == nil {
-		gormDB, err := open(table.dbContext.dbConfig)
-		if len(table.tableName) > 0 {
-			gormDB = gormDB.Table(table.tableName)
+		var gormDB *gorm.DB
+		var err error
+
+		// 上下文没有开启事务
+		if routineOrmClient.Get() == nil {
+			gormDB, err = open(table.dbContext.dbConfig)
+			if len(table.tableName) > 0 {
+				gormDB = gormDB.Table(table.tableName)
+			} else {
+				gormDB = gormDB.Session(&gorm.Session{})
+			}
 		} else {
-			gormDB = gormDB.Session(&gorm.Session{})
+			gormDB = routineOrmClient.Get()
+			if len(table.tableName) > 0 {
+				gormDB = gormDB.Table(table.tableName)
+			}
 		}
+
 		return &TableSet[Table]{
 			dbContext:  table.dbContext,
 			tableName:  table.tableName,

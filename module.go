@@ -32,7 +32,9 @@ func (module Module) PostInitialize() {
 		if config.DataType == "" {
 			panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
 		}
-
+		config.dbName = key
+		// 注册上下文
+		container.RegisterInstance[core.ITransaction](&DbContext{dbConfig: &config}, key)
 		// 注册健康检查
 		container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
 	}

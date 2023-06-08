@@ -11,6 +11,7 @@ require (
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/driver/sqlserver v1.4.1
 	gorm.io/gorm v1.24.2
+	github.com/timandy/routine v1.1.2-0.20230220091820-116334e7a111
 )
 
 require (
