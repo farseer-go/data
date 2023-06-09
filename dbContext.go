@@ -119,3 +119,23 @@ func (receiver *InternalDbContext) Rollback() {
 	routineOrmClient.Get().Rollback()
 	routineOrmClient.Remove()
 }
+
+// Original 返回原生的对象
+func (receiver *InternalDbContext) Original() *gorm.DB {
+	var gormDB *gorm.DB
+	var err error
+
+	// 上下文没有开启事务
+	if routineOrmClient.Get() == nil {
+		gormDB, err = open(receiver.dbConfig)
+		gormDB = gormDB.Session(&gorm.Session{})
+	} else {
+		gormDB = routineOrmClient.Get()
+	}
+
+	if err != nil {
+		_ = flog.Error(err)
+		return nil
+	}
+	return gormDB
+}
