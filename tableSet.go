@@ -5,6 +5,8 @@ import (
 	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"reflect"
+	"strings"
 )
 
 // TableSet 数据库表操作
@@ -38,6 +40,7 @@ func (table *TableSet[Table]) Init(dbContext *InternalDbContext, tableName strin
 	if autoCreateTable {
 		table.CreateTable()
 	}
+
 }
 
 // 初始化一个Session
@@ -415,4 +418,20 @@ func (table *TableSet[Table]) ExecuteSqlToList(sql string, values ...any) collec
 // Original 返回原生的对象
 func (table *TableSet[Table]) Original() *gorm.DB {
 	return table.getOrCreateSession().getClient()
+}
+
+// GetPrimaryName 获取主键
+func (table *TableSet[Table]) GetPrimaryName() string {
+	var tableIns Table
+	tableType := reflect.TypeOf(tableIns)
+
+	for i := 0; i < tableType.NumField(); i++ {
+		field := tableType.Field(i)
+		tag := field.Tag.Get("gorm")
+		// 找到主键ID（目前只支持单个主键）
+		if strings.Contains(tag, "primaryKey") {
+			return field.Name
+		}
+	}
+	return ""
 }
