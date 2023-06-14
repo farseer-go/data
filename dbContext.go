@@ -22,7 +22,7 @@ type InternalDbContext struct {
 }
 
 // NewContext 数据库上下文初始化
-// dbName：数据库配置名称
+// dbName：数据库配置名称，对应./farseer.yaml 中的 Database节点
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
 func NewContext[TDbContext IDbContext](dbName string, autoCreateTable bool) *TDbContext {
