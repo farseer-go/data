@@ -18,7 +18,8 @@ func (module Module) DependsModule() []modules.FarseerModule {
 func (module Module) PreInitialize() {
 	databaseConn = make(map[string]*gorm.DB)
 }
-func (module Module) PostInitialize() {
+
+func (module Module) Initialize() {
 	nodes := configure.GetSubNodes("Database")
 	for key, val := range nodes {
 		configString := val.(string)
