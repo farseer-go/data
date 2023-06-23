@@ -8,7 +8,7 @@ type DomainSet[Table any, TDomainObject any] struct {
 }
 
 // Init 在反射的时候会调用此方法
-func (r *DomainSet[Table, TDomainObject]) Init(dbContext *InternalDbContext, tableName string, autoCreateTable bool) {
+func (r *DomainSet[Table, TDomainObject]) Init(dbContext *InternalContext, tableName string, autoCreateTable bool) {
 	r.TableSet.Init(dbContext, tableName, autoCreateTable)
 
 	// 注册通用的仓储服务

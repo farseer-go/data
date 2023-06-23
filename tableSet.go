@@ -12,7 +12,7 @@ import (
 // TableSet 数据库表操作
 type TableSet[Table any] struct {
 	// 上下文（用指针的方式，共享同一个上下文）
-	dbContext *InternalDbContext
+	dbContext *InternalContext
 	// 表名
 	tableName string
 	// 最外层的ormClient一定是nil的
@@ -32,7 +32,7 @@ type whereQuery struct {
 }
 
 // Init 在反射的时候会调用此方法
-func (table *TableSet[Table]) Init(dbContext *InternalDbContext, tableName string, autoCreateTable bool) {
+func (table *TableSet[Table]) Init(dbContext *InternalContext, tableName string, autoCreateTable bool) {
 	table.dbContext = dbContext
 	table.SetTableName(tableName)
 

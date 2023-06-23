@@ -27,7 +27,7 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 		panic("dbName入参必须设置有效的值")
 	}
 
-	dbContext := container.Resolve[core.ITransaction](dbName).(*InternalDbContext)
+	dbContext := container.Resolve[core.ITransaction](dbName).(*InternalContext)
 	contextValueOf := reflect.ValueOf(repositoryContext).Elem()
 
 	// 遍历上下文中的TableSet字段类型
