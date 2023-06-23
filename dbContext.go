@@ -49,7 +49,8 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 		if field.CanSet() {
 			// 找到TableSet字段类型
 			_, isDataTableSet := types.IsDataTableSet(field)
-			if isDataTableSet {
+			_, isDataDomainSet := types.IsDataDomainSet(field)
+			if isDataTableSet || isDataDomainSet {
 				data := contextValueOf.Type().Field(i).Tag.Get("data")
 				var tableName string
 				if strings.HasPrefix(data, "name=") {

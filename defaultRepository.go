@@ -1,18 +1,17 @@
-package repository
+package data
 
 import (
 	"github.com/farseer-go/collections"
-	"github.com/farseer-go/data"
 	"github.com/farseer-go/mapper"
 )
 
 type DefaultRepository[TDomainObject any, TPoType any] struct {
 	primaryName string
-	table       data.TableSet[TPoType]
+	table       TableSet[TPoType]
 }
 
-func NewDefaultRepository[TDomainObject any, TPoType any](primaryName string, table data.TableSet[TPoType]) IRepository[TDomainObject] {
-	return &DefaultRepository[TDomainObject, TPoType]{primaryName: primaryName, table: table}
+func NewDefaultRepository[TDomainObject any, TPoType any](table TableSet[TPoType]) IRepository[TDomainObject] {
+	return &DefaultRepository[TDomainObject, TPoType]{primaryName: table.GetPrimaryName(), table: table}
 }
 
 func (receiver *DefaultRepository[TDomainObject, TPoType]) ToEntity(id any) TDomainObject {
