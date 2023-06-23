@@ -34,6 +34,7 @@ func (module Module) Initialize() {
 			panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
 		}
 		config.dbName = key
+		
 		// 注册上下文
 		container.RegisterInstance[core.ITransaction](&InternalDbContext{dbConfig: &config}, key)
 		// 注册健康检查
