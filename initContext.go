@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// IDbContext 数据库上下文
+type IDbContext interface{}
+
 // NewContext 数据库上下文初始化
 // dbName：数据库配置名称，对应./farseer.yaml 中的 Database节点
 // autoCreateTable：true表示自动创建表
@@ -27,7 +30,8 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 		panic("dbName入参必须设置有效的值")
 	}
 
-	dbContext := container.Resolve[core.ITransaction](dbName).(*InternalContext)
+	internalContextIns := container.Resolve[core.ITransaction](dbName).(*internalContext)
+	internalContextType := reflect.ValueOf(internalContextIns)
 	contextValueOf := reflect.ValueOf(repositoryContext).Elem()
 
 	// 遍历上下文中的TableSet字段类型
@@ -45,9 +49,9 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 				}
 
 				// 再取tableSet的子属性，并设置值
-				field.Addr().MethodByName("Init").Call([]reflect.Value{reflect.ValueOf(dbContext), reflect.ValueOf(tableName), reflect.ValueOf(autoCreateTable)})
-			} else if field.Type().String() == "core.ITransaction" {
-				field.Set(reflect.ValueOf(dbContext))
+				field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(tableName), reflect.ValueOf(autoCreateTable)})
+			} else if field.Type().String() == "core.ITransaction" || field.Type().String() == "data.IInternalContext" {
+				field.Set(internalContextType)
 			}
 		}
 	}
