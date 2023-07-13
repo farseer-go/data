@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
 		})
 		if err != nil {
+			_ = flog.Error(err)
 			return gormDB, err
 		}
 

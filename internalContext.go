@@ -3,7 +3,6 @@ package data
 import (
 	"database/sql"
 	"github.com/farseer-go/fs/core"
-	"github.com/farseer-go/fs/flog"
 	"github.com/timandy/routine"
 	"gorm.io/gorm"
 )
@@ -27,7 +26,6 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
 	if routineOrmClient.Get() == nil {
 		ormClient, err := open(receiver.dbConfig)
 		if err != nil {
-			_ = flog.Error(err)
 			return
 		}
 
@@ -77,7 +75,6 @@ func (receiver *internalContext) Original() *gorm.DB {
 	}
 
 	if err != nil {
-		_ = flog.Error(err)
 		return nil
 	}
 	return gormDB

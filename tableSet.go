@@ -47,11 +47,10 @@ func (table *TableSet[Table]) Init(dbContext *internalContext, tableName string,
 func (table *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 	if table.ormClient == nil {
 		var gormDB *gorm.DB
-		var err error
 
 		// 上下文没有开启事务
 		if routineOrmClient.Get() == nil {
-			gormDB, err = open(table.dbContext.dbConfig)
+			gormDB, table.err = open(table.dbContext.dbConfig)
 			if len(table.tableName) > 0 {
 				gormDB = gormDB.Table(table.tableName)
 			} else {
@@ -68,7 +67,7 @@ func (table *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			dbContext:  table.dbContext,
 			tableName:  table.tableName,
 			ormClient:  gormDB,
-			err:        err,
+			err:        table.err,
 			selectList: collections.NewListAny(),
 			whereList:  collections.NewList[whereQuery](),
 			orderList:  collections.NewListAny(),
