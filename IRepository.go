@@ -14,4 +14,6 @@ type IRepository[TDomainObject any] interface {
 	ToPageList(pageSize, pageIndex int) collections.PageList[TDomainObject]
 	// Count 数量
 	Count() int64
+	// Update 保存数据
+	Update(id any, do TDomainObject)
 }

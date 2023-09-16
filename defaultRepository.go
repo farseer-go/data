@@ -45,3 +45,8 @@ func (receiver *DefaultRepository[TDomainObject, TPoType]) ToPageList(pageSize, 
 func (receiver *DefaultRepository[TDomainObject, TPoType]) Count() int64 {
 	return receiver.table.Count()
 }
+
+func (receiver *DefaultRepository[TDomainObject, TPoType]) Update(id any, do TDomainObject) int64 {
+	po := mapper.Single[TPoType](&do)
+	return receiver.table.Where(receiver.primaryName, id).Update(po)
+}
