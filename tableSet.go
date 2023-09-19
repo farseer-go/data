@@ -299,8 +299,9 @@ func (table *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
 }
 
 // UpdateValue 修改单个字段
-func (table *TableSet[Table]) UpdateValue(column string, value any) {
-	table.getOrCreateSession().getClient().Update(column, value)
+func (table *TableSet[Table]) UpdateValue(column string, value any) int64 {
+	result := table.getOrCreateSession().getClient().Update(column, value)
+	return result.RowsAffected
 }
 
 // Delete 删除记录
