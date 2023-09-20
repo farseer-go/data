@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm/clause"
 	"reflect"
 	"strings"
+	"unicode"
 )
 
 // TableSet 数据库表操作
@@ -430,8 +431,41 @@ func (table *TableSet[Table]) GetPrimaryName() string {
 		tag := field.Tag.Get("gorm")
 		// 找到主键ID（目前只支持单个主键）
 		if strings.Contains(tag, "primaryKey") {
-			return field.Name
+			// 如果指定了列名，则使用指定的
+			for _, kv := range strings.Split(tag, ";") {
+				tags := strings.Split(kv, ":")
+				if len(tags) == 2 && tags[0] == "column" && tags[1] != "" {
+					return tags[1]
+				}
+			}
+			// 转蛇形命名
+			for _, r := range field.Name {
+				unicode.IsUpper(r)
+			}
+			return snakeString(field.Name)
 		}
 	}
 	return ""
+}
+
+// 大写字母，转蛇形
+func snakeString(s string) string {
+	data := make([]byte, 0, len(s)*2)
+	j := false
+	num := len(s)
+	for i := 0; i < num; i++ {
+		d := s[i]
+		// or通过ASCII码进行大小写的转化
+		// 65-90(A-Z)，97-122(a-z)
+		//判断如果字母为大写的A-Z就在前面拼接一个_
+		if i > 0 && d >= 'A' && d <= 'Z' && j {
+			data = append(data, '_')
+		}
+		if d != '_' {
+			j = true
+		}
+		data = append(data, d)
+	}
+	// 统一转小写
+	return strings.ToLower(string(data[:]))
 }
