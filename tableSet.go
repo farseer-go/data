@@ -38,7 +38,6 @@ func (table *TableSet[Table]) Init(dbContext *internalContext, tableName string,
 	if autoCreateTable {
 		table.CreateTable()
 	}
-
 }
 
 // 初始化一个Session
@@ -52,7 +51,10 @@ func (table *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			if len(table.tableName) > 0 {
 				gormDB = gormDB.Table(table.tableName)
 			} else {
-				gormDB = gormDB.Session(&gorm.Session{})
+				gormDB = gormDB.Session(&gorm.Session{
+					SkipDefaultTransaction: gormDB.SkipDefaultTransaction,
+					Logger:                 gormDB.Logger,
+				})
 			}
 		} else {
 			gormDB = routineOrmClient.Get()
@@ -60,7 +62,6 @@ func (table *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 				gormDB = gormDB.Table(table.tableName)
 			}
 		}
-
 		return &TableSet[Table]{
 			dbContext:  table.dbContext,
 			tableName:  table.tableName,
@@ -106,7 +107,7 @@ func (table *TableSet[Table]) getClient() *gorm.DB {
 		table.ormClient.Limit(table.limit)
 	}
 
-	return table.ormClient.Debug()
+	return table.ormClient
 }
 
 // SetTableName 设置表名

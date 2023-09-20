@@ -3,6 +3,9 @@ package data
 import (
 	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -22,6 +25,16 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		gormDB, err := gorm.Open(dbConfig.getDriver(), &gorm.Config{
 			SkipDefaultTransaction:                   true,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
+			Logger: logger.New(
+				log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+				logger.Config{
+					SlowThreshold:             time.Second, // 慢 SQL 阈值
+					Colorful:                  false,       // 禁用彩色打印
+					IgnoreRecordNotFoundError: true,
+					ParameterizedQueries:      false,
+					LogLevel:                  logger.Error, // Log level
+				},
+			),
 		})
 		if err != nil {
 			_ = flog.Error(err)
