@@ -273,18 +273,18 @@ func (table *TableSet[Table]) InsertList(lst collections.List[Table], batchSize 
 
 // Update 修改记录
 // 如果只更新部份字段，需使用Select进行筛选
-func (table *TableSet[Table]) Update(po Table) int64 {
+func (table *TableSet[Table]) Update(po Table) (int64, error) {
 	result := table.getOrCreateSession().getClient().Save(po)
-	return result.RowsAffected
+	return result.RowsAffected, result.Error
 }
 
 // Expr 对字段做表达式操作
 //
 //	exp: AddUp("price", "price * ? + ?", 2, 100)
 //	sql: UPDATE "xxx" SET "price" = price * 2 + 100
-func (table *TableSet[Table]) Expr(field string, expr string, args ...any) int64 {
+func (table *TableSet[Table]) Expr(field string, expr string, args ...any) (int64, error) {
 	result := table.getOrCreateSession().getClient().Update(field, gorm.Expr(expr, args...))
-	return result.RowsAffected
+	return result.RowsAffected, result.Error
 }
 
 // UpdateOrInsert 记录存在时更新，不存在时插入
@@ -301,15 +301,15 @@ func (table *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
 }
 
 // UpdateValue 修改单个字段
-func (table *TableSet[Table]) UpdateValue(column string, value any) int64 {
+func (table *TableSet[Table]) UpdateValue(column string, value any) (int64, error) {
 	result := table.getOrCreateSession().getClient().Update(column, value)
-	return result.RowsAffected
+	return result.RowsAffected, result.Error
 }
 
 // Delete 删除记录
-func (table *TableSet[Table]) Delete() int64 {
+func (table *TableSet[Table]) Delete() (int64, error) {
 	result := table.getOrCreateSession().getClient().Delete(nil)
-	return result.RowsAffected
+	return result.RowsAffected, result.Error
 }
 
 // GetString 获取单条记录中的单个string类型字段值
@@ -391,8 +391,9 @@ func (table *TableSet[Table]) GetFloat64(fieldName string) float64 {
 }
 
 // ExecuteSql 执行自定义SQL
-func (table *TableSet[Table]) ExecuteSql(sql string, values ...any) {
-	table.getOrCreateSession().getClient().Exec(sql, values...)
+func (table *TableSet[Table]) ExecuteSql(sql string, values ...any) (int64, error) {
+	result := table.getOrCreateSession().getClient().Exec(sql, values...)
+	return result.RowsAffected, result.Error
 }
 
 // ExecuteSqlToEntity 返回单个对象(执行自定义SQL)

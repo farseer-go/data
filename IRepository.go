@@ -15,5 +15,5 @@ type IRepository[TDomainObject any] interface {
 	// Count 数量
 	Count() int64
 	// Update 保存数据
-	Update(id any, do TDomainObject) int64
+	Update(id any, do TDomainObject) (int64, error)
 }

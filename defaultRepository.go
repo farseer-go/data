@@ -46,7 +46,7 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Count() int64 {
 	return receiver.table.Count()
 }
 
-func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDomainObject) int64 {
+func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDomainObject) (int64, error) {
 	po := mapper.Single[TPoType](do)
 	return receiver.table.Where(receiver.primaryName, id).Update(po)
 }
