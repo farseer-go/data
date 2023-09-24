@@ -2,8 +2,6 @@ package data
 
 import (
 	"github.com/farseer-go/fs/configure"
-	"github.com/farseer-go/fs/container"
-	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/modules"
 	"gorm.io/gorm"
 )
@@ -26,19 +24,7 @@ func (module Module) Initialize() {
 		if configString == "" {
 			panic("[farseer.yaml]Database." + key + "，没有正确配置")
 		}
-		config := configure.ParseString[dbConfig](configString)
-		if config.ConnectionString == "" {
-			panic("[farseer.yaml]Database." + key + ".ConnectionString，没有正确配置")
-		}
-		if config.DataType == "" {
-			panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
-		}
-		config.dbName = key
-
-		// 注册上下文
-		container.RegisterInstance[core.ITransaction](&internalContext{dbConfig: &config}, key)
-
-		// 注册健康检查
-		container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
+		// 注册内部上下文
+		RegisterInternalContext(key, configString)
 	}
 }

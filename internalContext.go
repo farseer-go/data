@@ -2,6 +2,8 @@ package data
 
 import (
 	"database/sql"
+	"github.com/farseer-go/fs/configure"
+	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/timandy/routine"
 	"gorm.io/gorm"
@@ -19,6 +21,24 @@ type IInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
+}
+
+// RegisterInternalContext 注册内部上下文
+func RegisterInternalContext(key string, configString string) {
+	config := configure.ParseString[dbConfig](configString)
+	if config.ConnectionString == "" {
+		panic("[farseer.yaml]Database." + key + ".ConnectionString，没有正确配置")
+	}
+	if config.DataType == "" {
+		panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
+	}
+	config.dbName = key
+
+	// 注册上下文
+	container.RegisterInstance[core.ITransaction](&internalContext{dbConfig: &config}, key)
+
+	// 注册健康检查
+	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
 }
 
 // Begin 开启事务
