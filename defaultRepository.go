@@ -50,3 +50,7 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDo
 	po := mapper.Single[TPoType](do)
 	return receiver.table.Where(receiver.primaryName, id).Update(po)
 }
+
+func (receiver *DefaultRepository[TPoType, TDomainObject]) Delete(id any) (int64, error) {
+	return receiver.table.Where(receiver.primaryName, id).Delete()
+}
