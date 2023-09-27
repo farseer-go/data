@@ -16,9 +16,9 @@ type IDbContext interface{}
 // dbName：数据库配置名称，对应./farseer.yaml 中的 Database节点
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
-func NewContext[TDbContext IDbContext](dbName string, autoCreateTable bool) *TDbContext {
+func NewContext[TDbContext IDbContext](dbName string) *TDbContext {
 	var context TDbContext
-	InitContext(&context, dbName, autoCreateTable)
+	InitContext(&context, dbName)
 	return &context
 }
 
@@ -26,7 +26,7 @@ func NewContext[TDbContext IDbContext](dbName string, autoCreateTable bool) *TDb
 // dbName：数据库配置名称
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
-func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName string, autoCreateTable bool) {
+func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName string) {
 	if dbName == "" {
 		panic("dbName入参必须设置有效的值")
 	}
@@ -49,13 +49,20 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 			// 初始化表名
 			if isDataTableSet || isDataDomainSet {
 				data := contextValueOf.Type().Field(i).Tag.Get("data")
-				var tableName string
-				if strings.HasPrefix(data, "name=") {
-					tableName = data[len("name="):]
+				param := make(map[string]string)
+				for _, kv := range strings.Split(data, ";") {
+					if kv == "" {
+						continue
+					}
+					arrKV := strings.Split(kv, "=")
+					if len(arrKV) == 2 {
+						param[arrKV[0]] = arrKV[1]
+					} else {
+						param[arrKV[0]] = ""
+					}
 				}
-
 				// 再取tableSet的子属性，并设置值
-				field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(tableName), reflect.ValueOf(autoCreateTable)})
+				field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(param)})
 			} else if field.Type().String() == "core.ITransaction" || field.Type().String() == "data.IInternalContext" {
 				field.Set(internalContextType)
 			}
@@ -67,7 +74,7 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 func RegisterContext[TDbContext IDbContext](dbName string, autoCreateTable bool) {
 	container.RegisterTransient(func() IDbContext {
 		var context TDbContext
-		InitContext(&context, dbName, autoCreateTable)
+		InitContext(&context, dbName)
 		return &context
 	}, dbName)
 }

@@ -31,13 +31,16 @@ type whereQuery struct {
 }
 
 // Init 在反射的时候会调用此方法
-func (table *TableSet[Table]) Init(dbContext *internalContext, tableName string, autoCreateTable bool) {
+func (table *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
 	table.dbContext = dbContext
-	table.SetTableName(tableName)
-
-	// 自动创建表
-	if autoCreateTable {
-		table.CreateTable()
+	for k, v := range param {
+		switch k {
+		case "name":
+			table.SetTableName(v)
+		case "migrate":
+			// 自动创建表
+			table.CreateTable(v)
+		}
 	}
 }
 
@@ -125,9 +128,13 @@ func (table *TableSet[Table]) GetTableName() string {
 // CreateTable 创建表（如果不存在）
 // 相关链接：https://gorm.cn/zh_CN/docs/migration.html
 // 相关链接：https://gorm.cn/zh_CN/docs/indexes.html
-func (table *TableSet[Table]) CreateTable() {
+func (table *TableSet[Table]) CreateTable(engine string) {
 	var entity Table
-	err := table.getOrCreateSession().ormClient.AutoMigrate(&entity)
+	db := table.getOrCreateSession().ormClient
+	if engine != "" {
+		db = db.Set("gorm:table_options", "ENGINE="+engine)
+	}
+	err := db.AutoMigrate(&entity)
 	if err != nil {
 		_ = flog.Errorf("创建表：%s 时，出错：%s", table.tableName, err.Error())
 	}
