@@ -11,7 +11,7 @@ type healthCheck struct {
 }
 
 func (c *healthCheck) Check() (string, error) {
-	InitContext(c, c.name, false)
+	InitContext(c, c.name)
 	var dbAt time.Time
 	tx := c.Original().Raw("select now()").Scan(&dbAt)
 	return fmt.Sprintf("Database.%s => %s", c.name, dbAt.Format(time.DateTime)), tx.Error
