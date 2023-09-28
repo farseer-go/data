@@ -33,14 +33,16 @@ type whereQuery struct {
 // Init 在反射的时候会调用此方法
 func (table *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
 	table.dbContext = dbContext
-	for k, v := range param {
-		switch k {
-		case "name":
-			table.SetTableName(v)
-		case "migrate":
-			// 自动创建表
-			table.CreateTable(v)
-		}
+	// 表名
+	name, exists := param["name"]
+	if exists {
+		table.SetTableName(name)
+	}
+
+	// 自动创建表
+	migrate, exists := param["migrate"]
+	if exists {
+		table.CreateTable(migrate)
 	}
 }
 
@@ -304,7 +306,7 @@ func (table *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
 	return table.getOrCreateSession().getClient().Clauses(clause.OnConflict{
 		Columns:   clos,
 		UpdateAll: true,
-	}).Create(po).Error
+	}).Create(&po).Error
 }
 
 // UpdateValue 修改单个字段
