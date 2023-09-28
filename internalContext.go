@@ -15,6 +15,10 @@ var routineOrmClient = routine.NewInheritableThreadLocal[*gorm.DB]()
 type IInternalContext interface {
 	core.ITransaction
 	Original() *gorm.DB
+	// ExecuteSql 执行自定义SQL
+	ExecuteSql(sql string, values ...any) (int64, error)
+	// ExecuteSqlToResult 返回结果(执行自定义SQL)
+	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any)
 }
 
 // internalContext 数据库上下文
@@ -98,4 +102,15 @@ func (receiver *internalContext) Original() *gorm.DB {
 		return nil
 	}
 	return gormDB
+}
+
+// ExecuteSql 执行自定义SQL
+func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, error) {
+	result := receiver.Original().Exec(sql, values...)
+	return result.RowsAffected, result.Error
+}
+
+// ExecuteSqlToResult 返回结果(执行自定义SQL)
+func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) {
+	receiver.Original().Raw(sql, values...).Find(&arrayOrEntity)
 }
