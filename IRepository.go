@@ -7,7 +7,7 @@ type IRepository[TDomainObject any] interface {
 	// ToEntity 查询实体
 	ToEntity(id any) TDomainObject
 	// Add 添加实体
-	Add(entity TDomainObject)
+	Add(entity TDomainObject) error
 	// ToList 获取所有列表
 	ToList() collections.List[TDomainObject]
 	// ToPageList 分页列表

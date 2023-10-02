@@ -5,12 +5,13 @@ import (
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
+	"github.com/farseer-go/fs/exception"
 	"github.com/timandy/routine"
 	"gorm.io/gorm"
 )
 
 // 实现同一个协程下的事务作用域
-var routineOrmClient = routine.NewInheritableThreadLocal[*gorm.DB]()
+var routineOrmClient = make(map[string]routine.ThreadLocal[*gorm.DB])
 
 type IInternalContext interface {
 	core.ITransaction
@@ -38,6 +39,9 @@ func RegisterInternalContext(key string, configString string) {
 	}
 	config.dbName = key
 
+	// 初始化共享事务
+	routineOrmClient[key] = routine.NewInheritableThreadLocal[*gorm.DB]()
+
 	// 注册上下文
 	container.RegisterInstance[core.ITransaction](&internalContext{dbConfig: &config}, key)
 
@@ -47,7 +51,7 @@ func RegisterInternalContext(key string, configString string) {
 
 // Begin 开启事务
 func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
-	if routineOrmClient.Get() == nil {
+	if routineOrmClient[receiver.dbConfig.dbName].Get() == nil {
 		ormClient, err := open(receiver.dbConfig)
 		if err != nil {
 			return
@@ -62,40 +66,43 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
 		ormClient = ormClient.Session(&gorm.Session{}).Begin(&sql.TxOptions{
 			Isolation: isolationLevel,
 		})
-		routineOrmClient.Set(ormClient)
+		routineOrmClient[receiver.dbConfig.dbName].Set(ormClient)
 	}
 }
 
 // Transaction 使用事务
 func (receiver *internalContext) Transaction(executeFn func()) {
 	receiver.Begin()
-	executeFn()
-	receiver.Commit()
+	exception.Try(func() {
+		executeFn()
+		receiver.Commit()
+	}).CatchException(func(exp any) {
+		receiver.Rollback()
+		panic(exp)
+	})
 }
 
 // Commit 事务提交
 func (receiver *internalContext) Commit() {
-	routineOrmClient.Get().Commit()
-	routineOrmClient.Remove()
+	routineOrmClient[receiver.dbConfig.dbName].Get().Commit()
+	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 
 // Rollback 事务回滚
 func (receiver *internalContext) Rollback() {
-	routineOrmClient.Get().Rollback()
-	routineOrmClient.Remove()
+	routineOrmClient[receiver.dbConfig.dbName].Get().Rollback()
+	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 
 // Original 返回原生的对象
 func (receiver *internalContext) Original() *gorm.DB {
-	var gormDB *gorm.DB
+	gormDB := routineOrmClient[receiver.dbConfig.dbName].Get()
 	var err error
 
 	// 上下文没有开启事务
-	if routineOrmClient.Get() == nil {
+	if gormDB == nil {
 		gormDB, err = open(receiver.dbConfig)
 		gormDB = gormDB.Session(&gorm.Session{})
-	} else {
-		gormDB = routineOrmClient.Get()
 	}
 
 	if err != nil {

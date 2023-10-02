@@ -20,9 +20,9 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) ToEntity(id any) TDom
 	return mapper.Single[TDomainObject](&po)
 }
 
-func (receiver *DefaultRepository[TPoType, TDomainObject]) Add(entity TDomainObject) {
+func (receiver *DefaultRepository[TPoType, TDomainObject]) Add(entity TDomainObject) error {
 	po := mapper.Single[TPoType](&entity)
-	_ = receiver.table.Insert(&po)
+	return receiver.table.Insert(&po)
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) ToList() collections.List[TDomainObject] {
@@ -43,7 +43,8 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) ToPageList(pageSize, 
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Count() int64 {
-	return receiver.table.Count()
+	count := receiver.table.Count()
+	return count
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDomainObject) (int64, error) {
