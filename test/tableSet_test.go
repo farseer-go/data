@@ -9,7 +9,7 @@ import (
 
 func TestTableSet(t *testing.T) {
 	var context TestMysqlContext
-	data.InitContext(&context, "test", false)
+	data.InitContext(&context, "test")
 
 	t.Run("delete", func(t *testing.T) {
 		// 先清空数据

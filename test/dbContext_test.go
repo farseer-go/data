@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
-	"github.com/farseer-go/fs"
-	"github.com/farseer-go/fs/configure"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 type TestMysqlContext struct {
-	User data.TableSet[UserPO] `data:"name=user"`
+	User data.TableSet[UserPO] `data:"name=user;migrate"`
 }
 
 type UserPO struct {
@@ -81,52 +79,40 @@ const (
 func TestNewContext(t *testing.T) {
 	t.Run("withoutDbName", func(t *testing.T) {
 		assert.Panics(t, func() {
-			data.NewContext[TestMysqlContext]("", false)
+			data.NewContext[TestMysqlContext]("")
 		})
 	})
 
 	t.Run("NotSetConfig", func(t *testing.T) {
 		assert.Panics(t, func() {
-			data.NewContext[TestMysqlContext]("test", false)
-		})
-	})
-
-	t.Run("errorPwd", func(t *testing.T) {
-		assert.Panics(t, func() {
-			configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-			data.NewContext[TestMysqlContext]("test", false).User.Count()
+			data.NewContext[TestMysqlContext]("test2")
 		})
 	})
 
 	t.Run("NewContext", func(t *testing.T) {
-		// 设置配置默认值，模拟配置文件
-		configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-		context := data.NewContext[TestMysqlContext]("test", false)
+		context := data.NewContext[TestMysqlContext]("test")
 		assert.Equal(t, "user", context.User.GetTableName())
 	})
 }
 
 func TestInitContext(t *testing.T) {
-	// 设置配置默认值，模拟配置文件
-	configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-
 	var context TestMysqlContext
 	t.Run("zero value", func(t *testing.T) {
-		data.InitContext(&context, "test", false)
+		data.InitContext(&context, "test")
 		assert.Equal(t, "user", context.User.GetTableName())
 	})
 
 	t.Run("have value", func(t *testing.T) {
-		data.InitContext(&context, "test", false)
+		data.InitContext(&context, "test")
 		assert.Equal(t, "user", context.User.GetTableName())
 	})
 
 	t.Run("ptr", func(t *testing.T) {
 		context2 := new(TestMysqlContext)
-		data.InitContext(context2, "test", false)
+		data.InitContext(context2, "test")
 		assert.Equal(t, "user", context2.User.GetTableName())
 
-		data.InitContext(context2, "test", false)
+		data.InitContext(context2, "test")
 		assert.Equal(t, "user", context2.User.GetTableName())
 		context2.User.SetTableName("user2")
 		assert.Equal(t, "user2", context2.User.GetTableName())
@@ -134,46 +120,19 @@ func TestInitContext(t *testing.T) {
 }
 
 func Test_checkConfig(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		assert.Panics(t, func() {
-			configure.SetDefault("Database.test", "")
-			fs.Initialize[data.Module]("test data")
-		})
-	})
-
-	t.Run("emptyConnection", func(t *testing.T) {
-		assert.Panics(t, func() {
-			configure.SetDefault("Database.test", "DataType=MySql,PoolMaxSize=50,PoolMinSize=1")
-			fs.Initialize[data.Module]("test data")
-		})
-	})
-
-	t.Run("emptyDataType", func(t *testing.T) {
-		assert.Panics(t, func() {
-			configure.SetDefault("Database.test", "PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-			fs.Initialize[data.Module]("test data")
-		})
-	})
-
 	t.Run("unknownDataType", func(t *testing.T) {
 		assert.Panics(t, func() {
-			configure.SetDefault("Database.test", "DataType=oracle,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-			data.NewContext[TestMysqlContext]("test", false).User.Count()
+			data.RegisterInternalContext("Database.test_oracle", "DataType=oracle,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
+			data.NewContext[TestMysqlContext]("test_oracle").User.Count()
 		})
 	})
 
 	t.Run("postgresql", func(t *testing.T) {
-		//configure.SetDefault("Database.test", "DataType=postgresql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-		//NewContext[TestMysqlContext]("test")
 	})
 
 	t.Run("sqlite", func(t *testing.T) {
-		//configure.SetDefault("Database.test", "DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-		//NewContext[TestMysqlContext]("test")
 	})
 
 	t.Run("sqlserver", func(t *testing.T) {
-		//configure.SetDefault("Database.test", "DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
-		//NewContext[TestMysqlContext]("test")
 	})
 }
