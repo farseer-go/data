@@ -11,7 +11,7 @@ type DefaultRepository[TPoType any, TDomainObject any] struct {
 }
 
 func NewDefaultRepository[TPoType any, TDomainObject any](table TableSet[TPoType]) IRepository[TDomainObject] {
-	return &DefaultRepository[TPoType, TDomainObject]{primaryName: table.GetPrimaryName(), table: table}
+	return &DefaultRepository[TPoType, TDomainObject]{primaryName: table.primaryName, table: table}
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) ToEntity(id any) TDomainObject {
