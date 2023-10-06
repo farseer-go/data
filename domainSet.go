@@ -15,7 +15,6 @@ func (r *DomainSet[TPo, TDomainObject]) Init(dbContext *internalContext, param m
 	if !container.IsRegister[IRepository[TDomainObject]]() {
 		container.Register(func() IRepository[TDomainObject] {
 			return NewDefaultRepository[TPo, TDomainObject](r.TableSet)
-			//return &DefaultRepository[TDomainObject, TPo]{primaryName: r.GetPrimaryName(), table: r.TableSet}
 		})
 	}
 }
