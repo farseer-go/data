@@ -5,9 +5,9 @@ import (
 	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
-	"unicode"
 )
 
 // TableSet 数据库表操作
@@ -17,11 +17,12 @@ type TableSet[Table any] struct {
 	ormClient *gorm.DB         // 最外层的ormClient一定是nil的
 	layer     int              // 链式第几层
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
-	selectList collections.ListAny
-	whereList  collections.List[whereQuery]
-	orderList  collections.ListAny
-	limit      int
-	err        error
+	selectList  collections.ListAny
+	whereList   collections.List[whereQuery]
+	orderList   collections.ListAny
+	limit       int
+	err         error
+	primaryName string
 }
 
 // where条件
@@ -33,6 +34,7 @@ type whereQuery struct {
 // Init 在反射的时候会调用此方法
 func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
 	receiver.dbContext = dbContext
+	receiver.GetPrimaryName()
 	// 表名
 	name, exists := param["name"]
 	if exists {
@@ -69,14 +71,15 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			}
 		}
 		return &TableSet[Table]{
-			dbContext:  receiver.dbContext,
-			tableName:  receiver.tableName,
-			ormClient:  gormDB,
-			err:        receiver.err,
-			layer:      1,
-			selectList: collections.NewListAny(),
-			whereList:  collections.NewList[whereQuery](),
-			orderList:  collections.NewListAny(),
+			dbContext:   receiver.dbContext,
+			tableName:   receiver.tableName,
+			ormClient:   gormDB,
+			err:         receiver.err,
+			layer:       1,
+			selectList:  collections.NewListAny(),
+			whereList:   collections.NewList[whereQuery](),
+			orderList:   collections.NewListAny(),
+			primaryName: receiver.primaryName,
 		}
 	}
 	return receiver
@@ -283,7 +286,9 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 // Update 修改记录
 // 如果只更新部份字段，需使用Select进行筛选
 func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Save(po)
+	mapPO := ToMap(po)
+	//result := receiver.getOrCreateSession().getClient().Save(po)
+	result := receiver.getOrCreateSession().getClient().Updates(mapPO)
 	return result.RowsAffected, result.Error
 }
 
@@ -292,7 +297,7 @@ func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
 //	exp: AddUp("price", "price * ? + ?", 2, 100)
 //	sql: UPDATE "xxx" SET "price" = price * 2 + 100
 func (receiver *TableSet[Table]) Expr(field string, expr string, args ...any) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Update(field, gorm.Expr(expr, args...))
+	result := receiver.getOrCreateSession().getClient().UpdateColumn(field, gorm.Expr(expr, args...))
 	return result.RowsAffected, result.Error
 }
 
@@ -311,7 +316,7 @@ func (receiver *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) erro
 
 // UpdateValue 修改单个字段
 func (receiver *TableSet[Table]) UpdateValue(column string, value any) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Update(column, value)
+	result := receiver.getOrCreateSession().getClient().UpdateColumn(column, value)
 	return result.RowsAffected, result.Error
 }
 
@@ -432,30 +437,23 @@ func (receiver *TableSet[Table]) Original() *gorm.DB {
 }
 
 // GetPrimaryName 获取主键
-func (receiver *TableSet[Table]) GetPrimaryName() string {
+func (receiver *TableSet[Table]) GetPrimaryName() {
 	var tableIns Table
 	tableType := reflect.TypeOf(tableIns)
 
 	for i := 0; i < tableType.NumField(); i++ {
 		field := tableType.Field(i)
-		tag := field.Tag.Get("gorm")
-		// 找到主键ID（目前只支持单个主键）
-		if strings.Contains(tag, "primaryKey") {
-			// 如果指定了列名，则使用指定的
-			for _, kv := range strings.Split(tag, ";") {
-				tags := strings.Split(kv, ":")
-				if len(tags) == 2 && tags[0] == "column" && tags[1] != "" {
-					return tags[1]
-				}
+		fieldTags := schema.ParseTagSetting(field.Tag.Get("gorm"), ";")
+		if _, existsPrimaryKey := fieldTags["PRIMARYKEY"]; existsPrimaryKey {
+			if c, existsColumn := fieldTags["COLUMN"]; existsColumn {
+				receiver.primaryName = c
+				return
 			}
-			// 转蛇形命名
-			for _, r := range field.Name {
-				unicode.IsUpper(r)
-			}
-			return snakeString(field.Name)
+			receiver.primaryName = schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", field.Name)
+			return
 		}
 	}
-	return ""
+	return
 }
 
 // 大写字母，转蛇形
