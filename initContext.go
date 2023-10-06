@@ -3,8 +3,8 @@ package data
 import (
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
+	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/types"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -33,7 +33,7 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 
 	transaction := container.Resolve[core.ITransaction](dbName)
 	if transaction == nil {
-		log.Panicf("初始化TDbContext失败，请确认./farseer.yaml配置文件中的Database.%s是否正确", dbName)
+		flog.Panicf("初始化TDbContext失败，请确认./farseer.yaml配置文件中的Database.%s是否正确", dbName)
 	}
 	internalContextIns := transaction.(*internalContext)
 	internalContextType := reflect.ValueOf(internalContextIns)
