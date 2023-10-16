@@ -18,4 +18,6 @@ type IRepository[TDomainObject any] interface {
 	Update(id any, do TDomainObject) (int64, error)
 	// Delete 删除数据
 	Delete(id any) (int64, error)
+	// IsExists 记录是否存在
+	IsExists(id any) bool
 }

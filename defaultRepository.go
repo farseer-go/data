@@ -55,3 +55,7 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDo
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Delete(id any) (int64, error) {
 	return receiver.table.Where(receiver.primaryName, id).Delete()
 }
+
+func (receiver *DefaultRepository[TPoType, TDomainObject]) IsExists(id any) bool {
+	return receiver.table.Where(receiver.primaryName, id).IsExists()
+}
