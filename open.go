@@ -1,11 +1,14 @@
 package data
 
 import (
+	"fmt"
 	"github.com/farseer-go/fs/flog"
+	"github.com/farseer-go/linkTrace"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -36,6 +39,13 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 				},
 			),
 		})
+		_ = gormDB.Callback().Raw().Register("raw", callBack)
+		_ = gormDB.Callback().Create().Register("Create", callBack)
+		_ = gormDB.Callback().Delete().Register("Delete", callBack)
+		_ = gormDB.Callback().Update().Register("Update", callBack)
+		_ = gormDB.Callback().Query().Register("Query", callBack)
+		_ = gormDB.Callback().Row().Register("Row", callBack)
+
 		if err != nil {
 			_ = flog.Error(err)
 			return gormDB, err
@@ -60,4 +70,19 @@ func setPool(gormDB *gorm.DB, dbConfig *dbConfig) {
 	}
 	// SetConnMaxLifetime 设置了连接可复用的最大时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
+}
+
+// 链路追踪记录
+func callBack(db *gorm.DB) {
+	sql := db.Statement.SQL.String()
+	// 将参数化替换成原SQL
+	for i := 0; i < len(db.Statement.Vars); i++ {
+		switch db.Statement.Vars[i].(type) {
+		case string, time.Time:
+			sql = strings.Replace(sql, "?", fmt.Sprintf("'%v'", db.Statement.Vars[i]), 1)
+		default:
+			sql = strings.Replace(sql, "?", fmt.Sprintf("%v", db.Statement.Vars[i]), 1)
+		}
+	}
+	linkTrace.TraceDatabase(db.Statement.DB.Name(), db.Statement.Table, sql)
 }
