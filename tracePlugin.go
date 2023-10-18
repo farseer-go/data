@@ -39,7 +39,7 @@ func (op *TracePlugin) traceBefore(db *gorm.DB) {
 // 链路追踪记录
 func (op *TracePlugin) traceAfter(db *gorm.DB) {
 	if result, exists := db.InstanceGet("trace"); exists {
-		if detail, isOk := result.(*linkTrace.TraceDatabaseDetail); isOk {
+		if detail, isOk := result.(*linkTrace.TraceDetailDatabase); isOk {
 			//sqlInfo.Rows = db.Statement.RowsAffected
 			detail.Sql = db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
 			detail.DbName = db.Statement.DB.Name()
