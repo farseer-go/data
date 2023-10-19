@@ -1,11 +1,13 @@
 package data
 
 import (
-	"github.com/farseer-go/linkTrace"
+	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 )
 
-type TracePlugin struct{}
+type TracePlugin struct {
+	traceManager trace.IManager
+}
 
 func (op *TracePlugin) Name() string {
 	return "tracePlugin"
@@ -32,18 +34,16 @@ func (op *TracePlugin) Initialize(db *gorm.DB) (err error) {
 
 // 链路追踪记录
 func (op *TracePlugin) traceBefore(db *gorm.DB) {
-	detail := linkTrace.TraceDatabase()
+	detail := op.traceManager.TraceDatabase()
 	db.InstanceSet("trace", detail)
 }
 
 // 链路追踪记录
 func (op *TracePlugin) traceAfter(db *gorm.DB) {
 	if result, exists := db.InstanceGet("trace"); exists {
-		if detail, isOk := result.(*linkTrace.TraceDetailDatabase); isOk {
+		if detail, isOk := result.(trace.ITraceDetail); isOk {
 			//sqlInfo.Rows = db.Statement.RowsAffected
-			detail.Sql = db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
-			detail.DbName = db.Statement.DB.Name()
-			detail.TableName = db.Statement.Table
+			detail.SetSql(db.Statement.DB.Name(), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...))
 			detail.End(db.Error)
 		}
 	}

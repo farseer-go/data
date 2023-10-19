@@ -1,8 +1,9 @@
 package data
 
 import (
+	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/flog"
-	"github.com/farseer-go/linkTrace"
+	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
@@ -21,8 +22,8 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 	if !exists {
 		lock.Lock()
 		defer lock.Unlock()
-
-		traceDatabase := linkTrace.TraceDatabase()
+		traceManager := container.Resolve[trace.IManager]()
+		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.dbName, dbConfig.ConnectionString)
 		// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 		gormDB, err := gorm.Open(dbConfig.getDriver(), &gorm.Config{
 			SkipDefaultTransaction:                   true,
@@ -38,10 +39,8 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 				},
 			),
 		})
-		traceDatabase.DbName = dbConfig.dbName
-		traceDatabase.ConnectionString = dbConfig.ConnectionString
 		defer traceDatabase.End(err)
-		_ = gormDB.Use(&TracePlugin{})
+		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})
 		if err != nil {
 			_ = flog.Error(err)
 			return gormDB, err
