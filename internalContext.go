@@ -2,16 +2,16 @@ package data
 
 import (
 	"database/sql"
+	"github.com/farseer-go/fs/asyncLocal"
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
-	"github.com/timandy/routine"
 	"gorm.io/gorm"
 )
 
 // 实现同一个协程下的事务作用域
-var routineOrmClient = make(map[string]routine.ThreadLocal[*gorm.DB])
+var routineOrmClient = make(map[string]asyncLocal.AsyncLocal[*gorm.DB])
 
 type IInternalContext interface {
 	core.ITransaction
@@ -40,7 +40,7 @@ func RegisterInternalContext(key string, configString string) {
 	config.dbName = key
 
 	// 初始化共享事务
-	routineOrmClient[key] = routine.NewInheritableThreadLocal[*gorm.DB]()
+	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()
 
 	// 注册上下文
 	container.RegisterInstance[core.ITransaction](&internalContext{dbConfig: &config}, key)
