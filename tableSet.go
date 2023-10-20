@@ -18,6 +18,7 @@ type TableSet[Table any] struct {
 	layer     int              // 链式第几层
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
 	selectList  collections.ListAny
+	omitList    collections.List[string]
 	whereList   collections.List[whereQuery]
 	orderList   collections.ListAny
 	limit       int
@@ -77,6 +78,7 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			err:         receiver.err,
 			layer:       1,
 			selectList:  collections.NewListAny(),
+			omitList:    collections.NewList[string](),
 			whereList:   collections.NewList[whereQuery](),
 			orderList:   collections.NewListAny(),
 			primaryName: receiver.primaryName,
@@ -95,6 +97,11 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 		} else {
 			receiver.ormClient.Select(lst.First())
 		}
+	}
+	// 设置Select
+	if receiver.omitList.Any() {
+		lst := receiver.omitList.Distinct()
+		receiver.ormClient.Omit(lst.ToArray()...)
 	}
 
 	// 设置Where
@@ -159,6 +166,15 @@ func (receiver *TableSet[Table]) Select(query any, args ...any) *TableSet[Table]
 	}
 	if len(args) > 0 {
 		session.selectList.Add(args...)
+	}
+	return session
+}
+
+// Omit 忽略字段
+func (receiver *TableSet[Table]) Omit(columns ...string) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	for _, s := range columns {
+		session.omitList.Add(s)
 	}
 	return session
 }
