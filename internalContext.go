@@ -119,5 +119,5 @@ func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, e
 
 // ExecuteSqlToResult 返回结果(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) {
-	receiver.Original().Raw(sql, values...).Find(&arrayOrEntity)
+	receiver.Original().Raw(sql, values...).Find(arrayOrEntity)
 }
