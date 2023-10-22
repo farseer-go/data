@@ -98,7 +98,7 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 			receiver.ormClient.Select(lst.First())
 		}
 	}
-	// 设置Select
+	// 设置Omit
 	if receiver.omitList.Any() {
 		lst := receiver.omitList.Distinct()
 		receiver.ormClient.Omit(lst.ToArray()...)
