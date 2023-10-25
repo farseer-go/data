@@ -11,6 +11,7 @@ require (
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/driver/sqlserver v1.5.2
 	gorm.io/gorm v1.25.5
+	gorm.io/driver/clickhouse v0.5.1
 )
 
 require (
