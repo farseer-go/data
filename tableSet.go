@@ -50,8 +50,8 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 }
 
 // CreateTable 创建表（如果不存在）
-// 相关链接：https://gorm.cn/zh_CN/docs/migration.html
-// 相关链接：https://gorm.cn/zh_CN/docs/indexes.html
+// 相关链接：https://gorm.io/zh_CN/docs/migration.html
+// 相关链接：https://gorm.io/zh_CN/docs/indexes.html
 func (receiver *TableSet[Table]) CreateTable(engine string) {
 	var entity Table
 	db := receiver.getOrCreateSession().ormClient
