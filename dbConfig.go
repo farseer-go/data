@@ -36,7 +36,7 @@ func (receiver *dbConfig) getDriver() gorm.Dialector {
 		// sqlserver://user:123456@127.0.0.1:9930?database=dbname
 		return sqlserver.Open(receiver.ConnectionString)
 	case "clickhouse":
-		// tcp://127.0.0.1:9000?database=dbname&username=default&password=&read_timeout=10&write_timeout=20
+		// clickhouse://user:123456@127.0.0.1:9942/dbname?dial_timeout=10s&read_timeout=20s
 		return clickhouse.Open(receiver.ConnectionString)
 	}
 	panic("无法识别数据库类型：" + receiver.DataType)
