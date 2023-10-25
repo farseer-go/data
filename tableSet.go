@@ -49,6 +49,21 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	}
 }
 
+// CreateTable 创建表（如果不存在）
+// 相关链接：https://gorm.cn/zh_CN/docs/migration.html
+// 相关链接：https://gorm.cn/zh_CN/docs/indexes.html
+func (receiver *TableSet[Table]) CreateTable(engine string) {
+	var entity Table
+	db := receiver.getOrCreateSession().ormClient
+	if engine != "" {
+		db = db.Set("gorm:table_options", "ENGINE="+engine)
+	}
+	err := db.AutoMigrate(&entity)
+	if err != nil {
+		_ = flog.Errorf("创建表：%s 时，出错：%s", receiver.tableName, err.Error())
+	}
+}
+
 // 初始化一个Session
 func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 	if receiver.layer == 0 {
@@ -135,21 +150,6 @@ func (receiver *TableSet[Table]) SetTableName(tableName string) *TableSet[Table]
 // GetTableName 获取表名称
 func (receiver *TableSet[Table]) GetTableName() string {
 	return receiver.tableName
-}
-
-// CreateTable 创建表（如果不存在）
-// 相关链接：https://gorm.cn/zh_CN/docs/migration.html
-// 相关链接：https://gorm.cn/zh_CN/docs/indexes.html
-func (receiver *TableSet[Table]) CreateTable(engine string) {
-	var entity Table
-	db := receiver.getOrCreateSession().ormClient
-	if engine != "" {
-		db = db.Set("gorm:table_options", "ENGINE="+engine)
-	}
-	err := db.AutoMigrate(&entity)
-	if err != nil {
-		_ = flog.Errorf("创建表：%s 时，出错：%s", receiver.tableName, err.Error())
-	}
 }
 
 // Select 筛选字段
