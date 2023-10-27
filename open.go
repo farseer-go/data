@@ -58,11 +58,11 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 func setPool(gormDB *gorm.DB, dbConfig *dbConfig) {
 	sqlDB, _ := gormDB.DB()
 	if dbConfig.PoolMaxSize > 0 {
-		// SetMaxIdleConns 设置空闲连接池中连接的最大数量
+		// 设置空闲连接池中连接的最大数量
 		sqlDB.SetMaxIdleConns(dbConfig.PoolMaxSize / 3)
-		// SetMaxOpenConns 设置打开数据库连接的最大数量。
+		// 设置打开数据库连接的最大数量。
 		sqlDB.SetMaxOpenConns(dbConfig.PoolMaxSize)
 	}
-	// SetConnMaxLifetime 设置了连接可复用的最大时间。
+	// 设置了连接可复用的最大时间。
 	sqlDB.SetConnMaxLifetime(time.Hour)
 }
