@@ -42,8 +42,11 @@ func (op *TracePlugin) traceBefore(db *gorm.DB) {
 func (op *TracePlugin) traceAfter(db *gorm.DB) {
 	if result, exists := db.InstanceGet("trace"); exists {
 		if detail, isOk := result.(trace.ITraceDetail); isOk {
-			//sqlInfo.Rows = db.Statement.RowsAffected
-			detail.SetSql(db.Statement.DB.Name(), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...))
+			if db.DryRun {
+				detail.Ignore()
+			} else {
+				detail.SetSql(db.Statement.DB.Name(), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...), db.Statement.RowsAffected)
+			}
 			detail.End(db.Error)
 		}
 	}
