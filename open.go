@@ -26,7 +26,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.dbName, dbConfig.ConnectionString)
 		// Data Source ClientName，参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 		gormDB, err := gorm.Open(dbConfig.getDriver(), &gorm.Config{
-			SkipDefaultTransaction:                   true,
+			SkipDefaultTransaction:                   false,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
 			Logger: logger.New(
 				log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
