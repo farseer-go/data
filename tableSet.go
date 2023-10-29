@@ -1,8 +1,8 @@
 package data
 
 import (
+	"fmt"
 	"github.com/farseer-go/collections"
-	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -60,7 +60,7 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 	}
 	err := db.AutoMigrate(&entity)
 	if err != nil {
-		_ = flog.Errorf("创建表：%s 时，出错：%s", receiver.tableName, err.Error())
+		panic(fmt.Sprintf("创建表：%s 时，出错：%s", receiver.tableName, err.Error()))
 	}
 }
 
@@ -264,7 +264,6 @@ func (receiver *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collect
 	offset := (pageIndex - 1) * pageSize
 	var lst []Table
 	client.Offset(offset).Limit(pageSize).Find(&lst)
-
 	return collections.NewPageList[Table](collections.NewList(lst...), count)
 }
 
@@ -291,12 +290,14 @@ func (receiver *TableSet[Table]) IsExists() bool {
 
 // Insert 新增记录
 func (receiver *TableSet[Table]) Insert(po *Table) error {
-	return receiver.getOrCreateSession().getClient().Create(po).Error
+	result := receiver.getOrCreateSession().getClient().Create(po)
+	return result.Error
 }
 
 // InsertList 批量新增记录
-func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) error {
-	return receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize).Error
+func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) (int64, error) {
+	result := receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
+	return result.RowsAffected, result.Error
 }
 
 // Update 修改记录
@@ -324,10 +325,11 @@ func (receiver *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) erro
 	for _, field := range fields {
 		clos = append(clos, clause.Column{Name: field})
 	}
-	return receiver.getOrCreateSession().getClient().Clauses(clause.OnConflict{
+	result := receiver.getOrCreateSession().getClient().Clauses(clause.OnConflict{
 		Columns:   clos,
 		UpdateAll: true,
-	}).Create(&po).Error
+	}).Create(&po)
+	return result.Error
 }
 
 // UpdateValue 修改单个字段
@@ -344,7 +346,8 @@ func (receiver *TableSet[Table]) Delete() (int64, error) {
 
 // GetString 获取单条记录中的单个string类型字段值
 func (receiver *TableSet[Table]) GetString(fieldName string) string {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer rows.Close()
 	var val string
 	for rows.Next() {
@@ -357,7 +360,8 @@ func (receiver *TableSet[Table]) GetString(fieldName string) string {
 
 // GetInt 获取单条记录中的单个int类型字段值
 func (receiver *TableSet[Table]) GetInt(fieldName string) int {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -370,7 +374,8 @@ func (receiver *TableSet[Table]) GetInt(fieldName string) int {
 
 // GetLong 获取单条记录中的单个int64类型字段值
 func (receiver *TableSet[Table]) GetLong(fieldName string) int64 {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -383,7 +388,8 @@ func (receiver *TableSet[Table]) GetLong(fieldName string) int64 {
 
 // GetBool 获取单条记录中的单个bool类型字段值
 func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -396,7 +402,8 @@ func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
 
 // GetFloat32 获取单条记录中的单个float32类型字段值
 func (receiver *TableSet[Table]) GetFloat32(fieldName string) float32 {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -409,7 +416,8 @@ func (receiver *TableSet[Table]) GetFloat32(fieldName string) float32 {
 
 // GetFloat64 获取单条记录中的单个float64类型字段值
 func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
-	rows, _ := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1).Rows()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
 	defer func() {
 		_ = rows.Close()
 	}()
