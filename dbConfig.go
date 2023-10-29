@@ -37,6 +37,7 @@ func (receiver *dbConfig) getDriver() gorm.Dialector {
 		return sqlserver.Open(receiver.ConnectionString)
 	case "clickhouse":
 		// clickhouse://user:123456@127.0.0.1:9942/dbname?dial_timeout=10s&read_timeout=20s
+		//return clickhouse.Open(receiver.ConnectionString)
 		return clickhouse.New(clickhouse.Config{
 			DSN:                          receiver.ConnectionString,
 			DisableDatetimePrecision:     true,     // disable datetime64 precision, not supported before clickhouse 20.4
