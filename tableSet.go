@@ -58,9 +58,19 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 	if engine != "" {
 		db = db.Set("gorm:table_options", "ENGINE="+engine)
 	}
-	err := db.AutoMigrate(&entity)
-	if err != nil {
-		panic(fmt.Sprintf("创建表：%s 时，出错：%s", receiver.tableName, err.Error()))
+	// 如果继承了IMigrator，则使用自定义的SQL来创建表
+	if mig, exists := any(&entity).(IMigratorCreate); exists {
+		if !db.Migrator().HasTable(db.Statement.Table) {
+			SqlScript := mig.CreateTable()
+			SqlScript=strings.ReplaceAll(SqlScript,"{table}",db.Statement.Table)
+			SqlScript=strings.ReplaceAll(SqlScript,"{database}",db.Migrator().CurrentDatabase())
+			receiver.err=db.Exec(SqlScript).Error
+		}
+	}else{
+		receiver.err= db.AutoMigrate(&entity)
+	}
+	if receiver.err != nil {
+		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
 }
 
