@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"github.com/farseer-go/collections"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -62,12 +63,12 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 	if mig, exists := any(&entity).(IMigratorCreate); exists {
 		if !db.Migrator().HasTable(db.Statement.Table) {
 			SqlScript := mig.CreateTable()
-			SqlScript=strings.ReplaceAll(SqlScript,"{table}",db.Statement.Table)
-			SqlScript=strings.ReplaceAll(SqlScript,"{database}",db.Migrator().CurrentDatabase())
-			receiver.err=db.Exec(SqlScript).Error
+			SqlScript = strings.ReplaceAll(SqlScript, "{table}", db.Statement.Table)
+			SqlScript = strings.ReplaceAll(SqlScript, "{database}", db.Migrator().CurrentDatabase())
+			receiver.err = db.Exec(SqlScript).Error
 		}
-	}else{
-		receiver.err= db.AutoMigrate(&entity)
+	} else {
+		receiver.err = db.AutoMigrate(&entity)
 	}
 	if receiver.err != nil {
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
@@ -432,6 +433,20 @@ func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
 		_ = rows.Close()
 	}()
 	var val float64
+	for rows.Next() {
+		_ = rows.Scan(&val)
+	}
+	return val
+}
+
+// GetDecimal 获取单条记录中的单个decimal.Decimal类型字段值
+func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
+	defer func() {
+		_ = rows.Close()
+	}()
+	var val decimal.Decimal
 	for rows.Next() {
 		_ = rows.Scan(&val)
 	}

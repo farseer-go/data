@@ -12,6 +12,7 @@ require (
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/driver/sqlserver v1.5.2
 	gorm.io/gorm v1.25.5
+	github.com/shopspring/decimal v1.3.1
 )
 
 require (
