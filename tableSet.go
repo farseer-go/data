@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/fs/parse"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -322,10 +323,20 @@ func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
 
 // Expr 对字段做表达式操作
 //
-//	exp: AddUp("price", "price * ? + ?", 2, 100)
+//	exp: Expr("price", "price * ? + ?", 2, 100)
 //	sql: UPDATE "xxx" SET "price" = price * 2 + 100
 func (receiver *TableSet[Table]) Expr(field string, expr string, args ...any) (int64, error) {
 	result := receiver.getOrCreateSession().getClient().UpdateColumn(field, gorm.Expr(expr, args...))
+	return result.RowsAffected, result.Error
+}
+
+// Exprs 对多个字段做表达式操作
+func (receiver *TableSet[Table]) Exprs(fields map[string][]any) (int64, error) {
+	exprs := make(map[string]clause.Expr)
+	for k, v := range fields {
+		exprs[k] = gorm.Expr(parse.ToString(v[0]), v[1:]...)
+	}
+	result := receiver.getOrCreateSession().getClient().UpdateColumns(exprs)
 	return result.RowsAffected, result.Error
 }
 
