@@ -537,3 +537,8 @@ func snakeString(s string) string {
 	// 统一转小写
 	return strings.ToLower(string(data[:]))
 }
+
+// Clickhouse 返回Clickhouse的对象
+func (receiver *TableSet[Table]) Clickhouse() *mergeTreeSet {
+	return newClickhouse(receiver.getOrCreateSession())
+}
