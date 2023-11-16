@@ -370,6 +370,9 @@ func (receiver *TableSet[Table]) Delete() (int64, error) {
 func (receiver *TableSet[Table]) GetString(fieldName string) string {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return ""
+	}
 	defer rows.Close()
 	var val string
 	for rows.Next() {
@@ -384,6 +387,9 @@ func (receiver *TableSet[Table]) GetString(fieldName string) string {
 func (receiver *TableSet[Table]) GetInt(fieldName string) int {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return 0
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -398,6 +404,9 @@ func (receiver *TableSet[Table]) GetInt(fieldName string) int {
 func (receiver *TableSet[Table]) GetLong(fieldName string) int64 {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return int64(0)
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -412,6 +421,9 @@ func (receiver *TableSet[Table]) GetLong(fieldName string) int64 {
 func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return false
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -426,6 +438,9 @@ func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
 func (receiver *TableSet[Table]) GetFloat32(fieldName string) float32 {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return float32(0)
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -440,6 +455,9 @@ func (receiver *TableSet[Table]) GetFloat32(fieldName string) float32 {
 func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return float64(0)
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
@@ -454,6 +472,9 @@ func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
 func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
+	if rows == nil {
+		return decimal.NewFromInt(0)
+	}
 	defer func() {
 		_ = rows.Close()
 	}()
