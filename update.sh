@@ -5,4 +5,6 @@ go get gorm.io/driver/mysql
 go get gorm.io/driver/postgres
 go get gorm.io/driver/sqlite
 go get gorm.io/driver/sqlserver
+go get gorm.io/driver/clickhouse
 go get gorm.io/gorm
+go get github.com/shopspring/decimal
