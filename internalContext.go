@@ -19,7 +19,9 @@ type IInternalContext interface {
 	// ExecuteSql 执行自定义SQL
 	ExecuteSql(sql string, values ...any) (int64, error)
 	// ExecuteSqlToResult 返回结果(执行自定义SQL)
-	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any)
+	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error)
+	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
+	ExecuteSqlToValue(value any, sql string, values ...any) (int64, error)
 }
 
 // internalContext 数据库上下文
@@ -123,6 +125,24 @@ func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, e
 }
 
 // ExecuteSqlToResult 返回结果(执行自定义SQL)
-func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) {
-	receiver.Original().Raw(sql, values...).Find(arrayOrEntity)
+func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error) {
+	result := receiver.Original().Raw(sql, values...)
+	result.Find(arrayOrEntity)
+	return result.RowsAffected, result.Error
+}
+
+// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
+func (receiver *TableSet[Table]) ExecuteSqlToValue(value any, sql string, values ...any) (int64, error) {
+	result := receiver.Original().Raw(sql, values...)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return 0, nil
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	for rows.Next() {
+		_ = rows.Scan(&value)
+	}
+	return result.RowsAffected, result.Error
 }
