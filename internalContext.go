@@ -21,7 +21,7 @@ type IInternalContext interface {
 	// ExecuteSqlToResult 返回结果(执行自定义SQL)
 	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error)
 	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
-	ExecuteSqlToValue(value any, sql string, values ...any) (int64, error)
+	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
 }
 
 // internalContext 数据库上下文
@@ -132,7 +132,7 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 }
 
 // ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
-func (receiver *TableSet[Table]) ExecuteSqlToValue(value any, sql string, values ...any) (int64, error) {
+func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values ...any) (int64, error) {
 	result := receiver.Original().Raw(sql, values...)
 	rows, _ := result.Rows()
 	if rows == nil {
@@ -142,7 +142,7 @@ func (receiver *TableSet[Table]) ExecuteSqlToValue(value any, sql string, values
 		_ = rows.Close()
 	}()
 	for rows.Next() {
-		_ = rows.Scan(&value)
+		_ = rows.Scan(&field)
 	}
 	return result.RowsAffected, result.Error
 }
