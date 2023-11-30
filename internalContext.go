@@ -42,7 +42,7 @@ func RegisterInternalContext(key string, configString string) {
 		panic("[farseer.yaml]Database." + key + ".ConnectionString，没有正确配置")
 	}
 	if config.DataType == "" {
-		panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置")
+		panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置：" + configString)
 	}
 	config.dbName = key
 
