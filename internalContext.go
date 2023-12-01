@@ -28,6 +28,8 @@ type IInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
+	gormDB *gorm.DB // 数据库对象
+
 }
 
 // RegisterInternalContext 注册内部上下文
@@ -59,7 +61,8 @@ func RegisterInternalContext(key string, configString string) {
 // Begin 开启事务
 func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
 	if routineOrmClient[receiver.dbConfig.dbName].Get() == nil {
-		ormClient, err := open(receiver.dbConfig)
+		var err error
+		receiver.gormDB, err = open(receiver.dbConfig)
 		if err != nil {
 			return
 		}
@@ -70,10 +73,10 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
 			isolationLevel = isolationLevels[0]
 		}
 		// 开启事务
-		ormClient = ormClient.Session(&gorm.Session{}).Begin(&sql.TxOptions{
+		receiver.gormDB = receiver.gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
 			Isolation: isolationLevel,
 		})
-		routineOrmClient[receiver.dbConfig.dbName].Set(ormClient)
+		routineOrmClient[receiver.dbConfig.dbName].Set(receiver.gormDB)
 	}
 }
 
@@ -82,7 +85,11 @@ func (receiver *internalContext) Transaction(executeFn func()) {
 	receiver.Begin()
 	exception.Try(func() {
 		executeFn()
+		if receiver.gormDB.Error!=nil{
 		receiver.Commit()
+		}else{
+			receiver.Rollback()
+		}
 	}).CatchException(func(exp any) {
 		receiver.Rollback()
 		panic(exp)
@@ -91,13 +98,13 @@ func (receiver *internalContext) Transaction(executeFn func()) {
 
 // Commit 事务提交
 func (receiver *internalContext) Commit() {
-	routineOrmClient[receiver.dbConfig.dbName].Get().Commit()
+	receiver.gormDB.Commit()
 	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 
 // Rollback 事务回滚
 func (receiver *internalContext) Rollback() {
-	routineOrmClient[receiver.dbConfig.dbName].Get().Rollback()
+	receiver.gormDB.Rollback()
 	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 
