@@ -37,9 +37,7 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) ToPageList(pageSize, 
 	lstOrder := receiver.table.Desc(receiver.primaryName).ToPageList(pageSize, pageIndex)
 
 	// po 转 do
-	var lst collections.PageList[TDomainObject]
-	lstOrder.MapToPageList(&lst)
-	return lst
+	return mapper.ToPageList[TDomainObject](lstOrder)
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Count() int64 {
