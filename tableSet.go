@@ -101,7 +101,7 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 		return &TableSet[Table]{
 			dbContext:   receiver.dbContext,
 			tableName:   receiver.tableName,
-			ormClient:   gormDB.Debug(),
+			ormClient:   gormDB,
 			err:         receiver.err,
 			layer:       1,
 			selectList:  collections.NewListAny(),
