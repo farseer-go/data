@@ -101,7 +101,7 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 		return &TableSet[Table]{
 			dbContext:   receiver.dbContext,
 			tableName:   receiver.tableName,
-			ormClient:   gormDB,
+			ormClient:   gormDB.Debug(),
 			err:         receiver.err,
 			layer:       1,
 			selectList:  collections.NewListAny(),
@@ -324,20 +324,41 @@ func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
 // Expr 对字段做表达式操作
 //
 //	exp: Expr("price", "price * ? + ?", 2, 100)
-//	sql: UPDATE "xxx" SET "price" = price * 2 + 100
+//	sql: UPDATE "xxx" SET price = price * 2 + 100
 func (receiver *TableSet[Table]) Expr(field string, expr string, args ...any) (int64, error) {
 	result := receiver.getOrCreateSession().getClient().UpdateColumn(field, gorm.Expr(expr, args...))
 	return result.RowsAffected, result.Error
 }
 
 // Exprs 对多个字段做表达式操作
+//
+//	exp: Exprs(map[string][]any{"price": {"price - ?", 10}, "count": {"count + ?", 5}})
+//	sql: UPDATE "xxx" SET price = price - 10, count = count + 5
 func (receiver *TableSet[Table]) Exprs(fields map[string][]any) (int64, error) {
-	exprs := make(map[string]clause.Expr)
+	var args []any
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("UPDATE %s SET ", receiver.tableName))
+
+	// SET
+	var setSql []string
 	for k, v := range fields {
-		exprs[k] = gorm.Expr(parse.ToString(v[0]), v[1:]...)
+		setSql = append(setSql, fmt.Sprintf("%s = ?", k))
+		args = append(args, gorm.Expr(parse.ToString(v[0]), v[1:]...))
 	}
-	result := receiver.getOrCreateSession().getClient().UpdateColumns(exprs)
-	return result.RowsAffected, result.Error
+	builder.WriteString(strings.Join(setSql, ", "))
+
+	// WHERE
+	if receiver.whereList.Any() {
+		var whereSql []string
+		builder.WriteString(" WHERE ")
+		for _, query := range receiver.whereList.ToArray() {
+			whereSql = append(whereSql, query.query.(string))
+			args = append(args, query.args...)
+		}
+		builder.WriteString(strings.Join(whereSql, " AND "))
+	}
+	rowsAffected, err := receiver.ExecuteSql(builder.String(), args...)
+	return rowsAffected, err
 }
 
 // UpdateOrInsert 记录存在时更新，不存在时插入
