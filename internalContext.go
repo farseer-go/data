@@ -28,7 +28,7 @@ type IInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
-	gormDB *gorm.DB // 数据库对象
+	gormDB         *gorm.DB           // 数据库对象
 
 }
 
@@ -85,9 +85,9 @@ func (receiver *internalContext) Transaction(executeFn func()) {
 	receiver.Begin()
 	exception.Try(func() {
 		executeFn()
-		if receiver.gormDB.Error!=nil{
-		receiver.Commit()
-		}else{
+		if receiver.gormDB.Error != nil {
+			receiver.Commit()
+		} else {
 			receiver.Rollback()
 		}
 	}).CatchException(func(exp any) {
@@ -140,16 +140,6 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 
 // ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values ...any) (int64, error) {
-	result := receiver.Original().Raw(sql, values...)
-	rows, _ := result.Rows()
-	if rows == nil {
-		return 0, nil
-	}
-	defer func() {
-		_ = rows.Close()
-	}()
-	for rows.Next() {
-		_ = rows.Scan(&field)
-	}
+	result := receiver.Original().Raw(sql, values...).Scan(&field)
 	return result.RowsAffected, result.Error
 }

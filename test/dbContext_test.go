@@ -136,3 +136,8 @@ func Test_checkConfig(t *testing.T) {
 	t.Run("sqlserver", func(t *testing.T) {
 	})
 }
+
+func TestExecuteSql(t *testing.T) {
+	var context TestMysqlContext
+	data.InitContext(&context, "test")
+}
