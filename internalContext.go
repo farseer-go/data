@@ -85,7 +85,7 @@ func (receiver *internalContext) Transaction(executeFn func()) {
 	receiver.Begin()
 	exception.Try(func() {
 		executeFn()
-		if receiver.gormDB.Error != nil {
+		if receiver.gormDB.Error == nil {
 			receiver.Commit()
 		} else {
 			receiver.Rollback()
