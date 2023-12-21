@@ -201,6 +201,14 @@ func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] 
 	return session
 }
 
+// WhereIf 当conditional==true时，使用条件
+func (receiver *TableSet[Table]) WhereIf(conditional bool, query any, args ...any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.Where(query, args...)
+}
+
 // WhereIgnoreLessZero 条件，自动忽略小于等于0的
 func (receiver *TableSet[Table]) WhereIgnoreLessZero(query any, val int) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
