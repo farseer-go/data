@@ -1,4 +1,4 @@
-package sqlserver
+package data_sqlserver
 
 import (
 	"gorm.io/driver/sqlserver"

@@ -1,4 +1,4 @@
-package clickhouse
+package data_clickhouse
 
 import (
 	"github.com/farseer-go/data"

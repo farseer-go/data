@@ -1,4 +1,4 @@
-package sqlserver
+package data_sqlserver
 
 import (
 	"github.com/farseer-go/data"

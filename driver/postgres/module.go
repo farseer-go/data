@@ -1,4 +1,4 @@
-package postgres
+package data_postgres
 
 import (
 	"github.com/farseer-go/data"

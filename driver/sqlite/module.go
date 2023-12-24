@@ -1,4 +1,4 @@
-package sqlite
+package data_sqlite
 
 import (
 	"github.com/farseer-go/data"
