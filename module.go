@@ -1,7 +1,9 @@
 package data
 
 import (
+	"github.com/farseer-go/data/driver/mysql"
 	"github.com/farseer-go/fs/configure"
+	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/modules"
 	"gorm.io/gorm"
 )
@@ -27,4 +29,9 @@ func (module Module) Initialize() {
 		// 注册内部上下文
 		RegisterInternalContext(key, configString)
 	}
+
+	// 注册mysql驱动
+	container.Register(func() IDataDriver {
+		return &mysql.DataDriver{}
+	}, "mysql")
 }
