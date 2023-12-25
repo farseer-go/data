@@ -8,6 +8,7 @@ import (
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
 	"gorm.io/gorm"
+	"strings"
 )
 
 // 实现同一个协程下的事务作用域
@@ -47,6 +48,40 @@ func RegisterInternalContext(key string, configString string) {
 		panic("[farseer.yaml]Database." + key + ".DataType，没有正确配置：" + configString)
 	}
 	config.dbName = key
+
+	// 获取数据库名称
+	switch config.DataType {
+	case "sqlserver":
+		// DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
+		dbNames := strings.Split(config.ConnectionString, "?") // database=dbname
+		for _, name := range dbNames {
+			if strings.HasPrefix(strings.ToLower(name), "database=") {
+				config.databaseName = strings.Split(name, "=")[1]
+			}
+		}
+	case "sqlite":
+		// DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=gorm.db
+		dbNames := strings.Split(config.ConnectionString, ",") // ConnectionString=gorm.db
+		for _, name := range dbNames {
+			if strings.HasPrefix(strings.ToLower(name), "connectionstring=") {
+				config.databaseName = strings.Split(name, "=")[1]
+			}
+		}
+	case "postgresql", "postgres":
+		// host=127.0.0.1 user=user password=123456 dbname=dbname port=9920 sslmode=disable TimeZone=Asia/Shanghai
+		dbNames := strings.Split(config.ConnectionString, " ")
+		for _, name := range dbNames {
+			if strings.HasPrefix(strings.ToLower(name), "dbname=") {
+				config.databaseName = strings.Split(name, "=")[1]
+			}
+		}
+	case "clickhouse", "mysql":
+		// clickhouse://user:123456@127.0.0.1:9942/dbname?dial_timeout=10s&read_timeout=20s
+		// user:123456@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+		dbNames := strings.Split(config.ConnectionString, "/") // dbname?charset=utf8mb4&parseTime=True&loc=Local
+		config.databaseName = dbNames[len(dbNames)-1]          // dbname?charset=utf8mb4&parseTime=True&loc=Local
+		config.databaseName = strings.Split(config.databaseName, "?")[0]
+	}
 
 	// 初始化共享事务
 	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()

@@ -13,6 +13,7 @@ type dbConfig struct {
 	PoolMaxSize      int
 	PoolMinSize      int
 	ConnectionString string
+	databaseName     string // 数据库名称
 }
 
 // GetDriver 获取对应驱动

@@ -98,6 +98,9 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 				gormDB = gormDB.Table(receiver.tableName)
 			}
 		}
+
+		gormDB.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
+		gormDB.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
 		return &TableSet[Table]{
 			dbContext:   receiver.dbContext,
 			tableName:   receiver.tableName,
@@ -111,6 +114,9 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			primaryName: receiver.primaryName,
 		}
 	}
+
+	receiver.ormClient.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
+	receiver.ormClient.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
 	return receiver
 }
 

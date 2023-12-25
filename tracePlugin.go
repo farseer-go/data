@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/farseer-go/fs/parse"
 	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 )
@@ -45,7 +46,9 @@ func (op *TracePlugin) traceAfter(db *gorm.DB) {
 			if db.DryRun {
 				detail.Ignore()
 			} else {
-				detail.SetSql(db.Statement.DB.Name(), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...), db.Statement.RowsAffected)
+				connectionString, _ := db.InstanceGet("ConnectionString")
+				dbName, _ := db.InstanceGet("DbName")
+				detail.SetSql(parse.ToString(connectionString), parse.ToString(dbName), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...), db.Statement.RowsAffected)
 			}
 			detail.End(db.Error)
 		}
