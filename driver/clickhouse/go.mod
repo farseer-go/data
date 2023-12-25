@@ -1,4 +1,4 @@
-module github.com/farseer-go/data/driver/lickhouse
+module github.com/farseer-go/data/driver/clickhouse
 
 go 1.19
 
