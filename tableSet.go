@@ -296,7 +296,8 @@ func (receiver *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collect
 // ToEntity 返回单个对象
 func (receiver *TableSet[Table]) ToEntity() Table {
 	var entity Table
-	receiver.getOrCreateSession().getClient().Limit(1).Find(&entity)
+	tx := receiver.getOrCreateSession().getClient().Limit(1).Find(&entity)
+	fmt.Print(tx.RowsAffected)
 	return entity
 }
 
