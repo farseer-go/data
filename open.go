@@ -23,7 +23,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		lock.Lock()
 		defer lock.Unlock()
 		traceManager := container.Resolve[trace.IManager]()
-		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.dbName, dbConfig.ConnectionString)
+		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.databaseName, dbConfig.ConnectionString)
 
 		// 连接数据库参考：https://gorm.io/zh_CN/docs/connecting_to_the_database.html
 		// Data Source ClientName 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
