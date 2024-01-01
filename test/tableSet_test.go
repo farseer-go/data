@@ -63,6 +63,11 @@ func TestTableSet(t *testing.T) {
 		assert.Less(t, 1, lst.First().Id)
 	})
 
+	// 测试where、whereIf
+	t.Run("where、whereIf", func(t *testing.T) {
+
+	})
+
 	// 测试排序
 	t.Run("asc", func(t *testing.T) {
 		lst := context.User.Asc("Age").ToList()

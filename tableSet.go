@@ -207,12 +207,148 @@ func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] 
 	return session
 }
 
+// WhereEq 条件
+func (receiver *TableSet[Table]) WhereEq(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v = ?", columnName),
+		args:  []any{args},
+	})
+	return session
+}
+
+// WhereGt 大于条件
+func (receiver *TableSet[Table]) WhereGt(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v > ?", columnName),
+		args:  []any{args},
+	})
+	return session
+}
+
+// WhereGte 大于等于条件
+func (receiver *TableSet[Table]) WhereGte(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v >= ?", columnName),
+		args:  []any{args},
+	})
+	return session
+}
+
+// WhereLt 小于条件
+func (receiver *TableSet[Table]) WhereLt(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v < ?", columnName),
+		args:  []any{args},
+	})
+	return session
+} // WhereLte 小于等于条件
+func (receiver *TableSet[Table]) WhereLte(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v <= ?", columnName),
+		args:  []any{args},
+	})
+	return session
+} // WhereIn in条件
+func (receiver *TableSet[Table]) WhereIn(columnName any, args ...any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v in ?", columnName),
+		args:  args,
+	})
+	return session
+} // WhereLike like条件("%?%")
+func (receiver *TableSet[Table]) WhereLike(columnName any, args any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v like ?", columnName),
+		args:  []any{fmt.Sprintf("%%%v%%", args)},
+	})
+	return session
+} // WhereEq between条件(>= and <=)
+func (receiver *TableSet[Table]) WhereBetween(columnName any, min, max any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("%v >= ? and %v <= ?", columnName, columnName),
+		args:  []any{min, max},
+	})
+	return session
+}
+
 // WhereIf 当conditional==true时，使用条件
 func (receiver *TableSet[Table]) WhereIf(conditional bool, query any, args ...any) *TableSet[Table] {
 	if !conditional {
 		return receiver
 	}
 	return receiver.Where(query, args...)
+}
+
+// WhereEqIf 当conditional==true时，使用等于条件
+func (receiver *TableSet[Table]) WhereEqIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereEq(columnName, args)
+}
+
+// WhereGtIf 当conditional==true时，使用大于条件
+func (receiver *TableSet[Table]) WhereGtIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereGt(columnName, args)
+}
+
+// WhereGteIf 当conditional==true时，使用大于等于条件
+func (receiver *TableSet[Table]) WhereGteIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereGte(columnName, args)
+}
+
+// WhereLtIf 当conditional==true时，使用小于条件
+func (receiver *TableSet[Table]) WhereLtIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereLt(columnName, args)
+}
+
+// WhereLteIf 当conditional==true时，使用小于等于条件
+func (receiver *TableSet[Table]) WhereLteIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereLte(columnName, args)
+}
+
+// WhereInIf 当conditional==true时，使用in条件
+func (receiver *TableSet[Table]) WhereInIf(conditional bool, columnName any, args ...any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereIn(columnName, args)
+}
+
+// WhereLikeIf 当conditional==true时，使用like条件("%?%"匹配)
+func (receiver *TableSet[Table]) WhereLikeIf(conditional bool, columnName any, args any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereLike(columnName, args)
+}
+
+// WhereBetweenIf 当conditional==true时，使用between条件(>=and<=)
+func (receiver *TableSet[Table]) WhereBetweenIf(conditional bool, columnName any, min, max any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.WhereBetween(columnName, min, max)
 }
 
 // WhereIgnoreLessZero 条件，自动忽略小于等于0的
