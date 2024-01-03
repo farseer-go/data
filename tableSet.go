@@ -382,6 +382,14 @@ func (receiver *TableSet[Table]) Order(value any) *TableSet[Table] {
 	return session
 }
 
+// OrderIf 排序，当conditional==true时，使用排序
+func (receiver *TableSet[Table]) OrderIf(conditional bool, value any) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.Order(value)
+}
+
 // Desc 倒序
 func (receiver *TableSet[Table]) Desc(fieldName string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
@@ -389,11 +397,43 @@ func (receiver *TableSet[Table]) Desc(fieldName string) *TableSet[Table] {
 	return session
 }
 
+// DescIf 倒序，当conditional==true时，使用倒序
+func (receiver *TableSet[Table]) DescIf(conditional bool, fieldName string) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.Desc(fieldName)
+}
+
+// DescIfElse 倒序，当conditional==true时，使用trueFieldName倒序，否则使用falseFieldName倒序
+func (receiver *TableSet[Table]) DescIfElse(conditional bool, trueFieldName string, falseFieldName string) *TableSet[Table] {
+	if conditional {
+		return receiver.Desc(trueFieldName)
+	}
+	return receiver.Desc(falseFieldName)
+}
+
 // Asc 正序
 func (receiver *TableSet[Table]) Asc(fieldName string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.orderList.Add(fieldName + " asc")
 	return session
+}
+
+// AscIf 正序，当conditional==true时，使用正序
+func (receiver *TableSet[Table]) AscIf(conditional bool, fieldName string) *TableSet[Table] {
+	if !conditional {
+		return receiver
+	}
+	return receiver.Asc(fieldName)
+}
+
+// AscIfElse 正序，当conditional==true时，使用trueFieldName正序，否则使用falseFieldName正序
+func (receiver *TableSet[Table]) AscIfElse(conditional bool, trueFieldName string, falseFieldName string) *TableSet[Table] {
+	if conditional {
+		return receiver.Asc(trueFieldName)
+	}
+	return receiver.Asc(falseFieldName)
 }
 
 // Limit 限制记录数
