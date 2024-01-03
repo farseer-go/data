@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/trace"
@@ -42,9 +41,6 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 				},
 			),
 		})
-		if err != nil {
-			fmt.Printf(dbConfig.ConnectionString)
-		}
 		defer traceDatabase.End(err)
 		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})
 		if err != nil {
