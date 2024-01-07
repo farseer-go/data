@@ -498,6 +498,10 @@ func (receiver *TableSet[Table]) Insert(po *Table) error {
 
 // InsertList 批量新增记录
 func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) (int64, error) {
+	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
+	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		batchSize = lst.Count()
+	}
 	result := receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
 	return result.RowsAffected, result.Error
 }
