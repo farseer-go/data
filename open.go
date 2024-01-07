@@ -49,7 +49,6 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		}
 
 		setPool(gormDB, dbConfig)
-
 		databaseConn[dbConfig.dbName] = gormDB
 		db = gormDB
 	}
