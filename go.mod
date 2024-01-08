@@ -18,6 +18,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/timandy/routine v1.1.3 // indirect
+	github.com/timandy/routine v1.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
