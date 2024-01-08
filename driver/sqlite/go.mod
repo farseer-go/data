@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/farseer-go/collections v0.11.0 // indirect
+	github.com/farseer-go/collections v0.12.0 // indirect
 	github.com/farseer-go/mapper v0.11.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
