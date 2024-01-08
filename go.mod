@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/farseer-go/collections v0.12.0
 	github.com/farseer-go/fs v0.12.0
-	github.com/farseer-go/mapper v0.11.0
+	github.com/farseer-go/mapper v0.12.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.4
 	gorm.io/driver/mysql v1.5.2
