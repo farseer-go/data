@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/farseer-go/data v0.11.0
-	github.com/farseer-go/fs v0.11.0
+	github.com/farseer-go/fs v0.12.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.5
 )
