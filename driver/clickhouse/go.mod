@@ -37,4 +37,5 @@ require (
 )
 
 // 原库404
-replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
+exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
+//replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
