@@ -23,3 +23,11 @@ func (receiver *dbConfig) GetDriver() gorm.Dialector {
 	}
 	return container.Resolve[IDataDriver](receiver.DataType).GetDriver(receiver.ConnectionString)
 }
+
+// CreateIndex 创建索引的SQL
+func (receiver *dbConfig) CreateIndex(tableName, idxName string, fieldsName ...string) string {
+	if !container.IsRegister[IDataDriver](receiver.DataType) {
+		panic(fmt.Sprintf("要使用%s，请加载模块：对应的驱动，通常位置在：github.com/farseer-go/data/driver/%s", receiver.DataType, receiver.DataType))
+	}
+	return container.Resolve[IDataDriver](receiver.DataType).CreateIndex(tableName, idxName, fieldsName...)
+}

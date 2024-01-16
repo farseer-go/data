@@ -23,3 +23,7 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 		DefaultTableEngineOpts:       "ENGINE=MergeTree() ORDER BY tuple()",
 	})
 }
+
+func (receiver *DataDriver) CreateIndex(idxName string, fieldsName ...string) string {
+	return fmt.Sprintf("CREATE INDEX %s ON table_name (%s);", idxName, strings.Join(fieldsName, ","))
+}

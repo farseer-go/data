@@ -74,6 +74,25 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 	if receiver.err != nil {
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
+
+	// 创建索引
+	if mig, exists := any(&entity).(IMigratorIndex); exists {
+		// 得到要创建的索引字段
+		idx := mig.CreateIndex()
+		for idxName, idxFields := range idx {
+			// 索引已存在时，不创建
+			if db.Migrator().HasIndex(db.Statement.Table, idxName) {
+				continue
+			}
+
+			// 得到创建索引的SQL脚本
+			sqlScript := receiver.dbContext.dbConfig.CreateIndex(db.Statement.Table, idxName, idxFields...)
+			// 执行
+			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
+				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
+			}
+		}
+	}
 }
 
 // 初始化一个Session
