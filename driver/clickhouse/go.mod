@@ -9,6 +9,11 @@ require (
 	gorm.io/gorm v1.25.5
 )
 
+
+// 原库404
+exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
+//replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
+
 require (
 	github.com/ClickHouse/ch-go v0.61.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.17.1 // indirect
@@ -35,7 +40,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.2 // indirect
 )
-
-// 原库404
-exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
-//replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
