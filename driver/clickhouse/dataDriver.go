@@ -27,12 +27,12 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 	})
 }
 
-func (receiver *dataDriver) CreateIndex(tableName string, idxField data.IdxField) string {
+func (receiver *dataDriver) CreateIndex(tableName string, idxName string, idxField data.IdxField) string {
 	var b bytes.Buffer
 	b.WriteString("CREATE ")
 	if idxField.IsUNIQUE {
 		b.WriteString("UNIQUE ")
 	}
-	b.WriteString(fmt.Sprintf("INDEX %s ON %s (%s);", idxField.IdxName, tableName, idxField.Fields))
+	b.WriteString(fmt.Sprintf("INDEX %s ON %s (%s);", idxName, tableName, idxField.Fields))
 	return b.String()
 }
