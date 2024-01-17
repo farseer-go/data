@@ -1,10 +1,11 @@
 package mysql
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/farseer-go/data"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"strings"
 )
 
 type DataDriver struct {
@@ -15,6 +16,12 @@ func (receiver *DataDriver) GetDriver(connectionString string) gorm.Dialector {
 	return mysql.Open(connectionString)
 }
 
-func (receiver *DataDriver) CreateIndex(tableName, idxName string, fieldsName ...string) string {
-	return fmt.Sprintf("CREATE INDEX %s ON %s (%s);", idxName, tableName, strings.Join(fieldsName, ","))
+func (receiver *DataDriver) CreateIndex(tableName string, idxField data.IdxField) string {
+	var b bytes.Buffer
+	b.WriteString("CREATE ")
+	if idxField.IsUNIQUE {
+		b.WriteString("UNIQUE ")
+	}
+	b.WriteString(fmt.Sprintf("INDEX %s ON %s (%s);", idxField.IdxName, tableName, idxField.Fields))
+	return b.String()
 }

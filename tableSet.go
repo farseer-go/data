@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -47,16 +48,19 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	// 自动创建表
 	migrate, exists := param["migrate"]
 	if exists {
-		receiver.CreateTable(migrate)
+		db := receiver.getOrCreateSession().ormClient
+		// 创建表
+		receiver.CreateTable(db, migrate)
+		// 创建索引
+		receiver.CreateIndex(db)
 	}
 }
 
 // CreateTable 创建表（如果不存在）
 // 相关链接：https://gorm.io/zh_CN/docs/migration.html
 // 相关链接：https://gorm.io/zh_CN/docs/indexes.html
-func (receiver *TableSet[Table]) CreateTable(engine string) {
+func (receiver *TableSet[Table]) CreateTable(db *gorm.DB, engine string) {
 	var entity Table
-	db := receiver.getOrCreateSession().ormClient
 	if engine != "" {
 		db = db.Set("gorm:table_options", "ENGINE="+engine)
 	}
@@ -75,8 +79,17 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
 
+}
+
+func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
+	var entity Table
+
 	// 创建索引
 	if mig, exists := any(&entity).(IMigratorIndex); exists {
+		if !container.IsRegister[IDataDriver](receiver.dbContext.dbConfig.DataType) {
+			panic(fmt.Sprintf("要使用%s，请加载模块：对应的驱动，通常位置在：github.com/farseer-go/data/driver/%s", receiver.dbContext.dbConfig.DataType, receiver.dbContext.dbConfig.DataType))
+		}
+
 		// 得到要创建的索引字段
 		idx := mig.CreateIndex()
 		for idxName, idxFields := range idx {
@@ -86,7 +99,7 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 			}
 
 			// 得到创建索引的SQL脚本
-			sqlScript := receiver.dbContext.dbConfig.CreateIndex(db.Statement.Table, idxName, idxFields...)
+			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(db.Statement.Table, idxFields)
 			// 执行
 			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
