@@ -1,8 +1,10 @@
 package data_clickhouse
 
 import (
+	"fmt"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type dataDriver struct {
@@ -24,6 +26,6 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 	})
 }
 
-func (receiver *DataDriver) CreateIndex(idxName string, fieldsName ...string) string {
-	return fmt.Sprintf("CREATE INDEX %s ON table_name (%s);", idxName, strings.Join(fieldsName, ","))
+func (receiver *dataDriver) CreateIndex(tableName, idxName string, fieldsName ...string) string {
+	return fmt.Sprintf("CREATE INDEX %s ON %s (%s);", idxName, tableName, strings.Join(fieldsName, ","))
 }
