@@ -1,7 +1,6 @@
 package data
 
 import (
-	"github.com/farseer-go/data/driver/mysql"
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/modules"
@@ -32,6 +31,6 @@ func (module Module) Initialize() {
 
 	// 注册mysql驱动
 	container.Register(func() IDataDriver {
-		return &mysql.DataDriver{}
+		return &DataDriver{}
 	}, "mysql")
 }

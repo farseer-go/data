@@ -1,9 +1,8 @@
-package mysql
+package data
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/farseer-go/data"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -16,7 +15,7 @@ func (receiver *DataDriver) GetDriver(connectionString string) gorm.Dialector {
 	return mysql.Open(connectionString)
 }
 
-func (receiver *DataDriver) CreateIndex(tableName string, idxName string, idxField data.IdxField) string {
+func (receiver *DataDriver) CreateIndex(tableName string, idxName string, idxField IdxField) string {
 	var b bytes.Buffer
 	b.WriteString("CREATE ")
 	if idxField.IsUNIQUE {

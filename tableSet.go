@@ -99,7 +99,7 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 			}
 
 			// 得到创建索引的SQL脚本
-			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(db.Statement.Table, idxFields)
+			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(db.Statement.Table, idxName, idxFields)
 			// 执行
 			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
