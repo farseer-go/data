@@ -7,6 +7,7 @@ import (
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
+	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -29,8 +30,6 @@ type IInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
-	gormDB         *gorm.DB           // 数据库对象
-
 }
 
 // RegisterInternalContext 注册内部上下文
@@ -47,6 +46,7 @@ func RegisterInternalContext(key string, configString string) {
 	if config.DataType == "" {
 		panic("[farseer.yaml]Database." + key + ".DataType，配置不正确：" + configString)
 	}
+	config.DataType = strings.ToLower(config.DataType)
 	config.dbName = key
 
 	// 获取数据库名称
@@ -94,33 +94,42 @@ func RegisterInternalContext(key string, configString string) {
 }
 
 // Begin 开启事务
-func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) {
-	if routineOrmClient[receiver.dbConfig.dbName].Get() == nil {
-		var err error
-		receiver.gormDB, err = open(receiver.dbConfig)
-		if err != nil {
-			return
-		}
+func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) error {
+	// 事务等级
+	isolationLevel := sql.LevelDefault
+	if len(isolationLevels) > 0 {
+		isolationLevel = isolationLevels[0]
+	}
 
-		// 事务等级
-		isolationLevel := sql.LevelDefault
-		if len(isolationLevels) > 0 {
-			isolationLevel = isolationLevels[0]
+	if routineOrmClient[receiver.dbConfig.dbName].Get() == nil {
+		gormDB, err := open(receiver.dbConfig)
+		if err != nil {
+			return err
 		}
 		// 开启事务
-		receiver.gormDB = receiver.gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
+		gormDB = gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
 			Isolation: isolationLevel,
 		})
-		routineOrmClient[receiver.dbConfig.dbName].Set(receiver.gormDB)
+		routineOrmClient[receiver.dbConfig.dbName].Set(gormDB)
 	}
+	return nil
 }
 
 // Transaction 使用事务
-func (receiver *internalContext) Transaction(executeFn func()) {
-	receiver.Begin()
+func (receiver *internalContext) Transaction(executeFn func(), isolationLevels ...sql.IsolationLevel) {
+	var err error
+	traceHand := container.Resolve[trace.IManager]().TraceHand("开启事务")
+	defer func() { traceHand.End(err) }()
+
+	// 开启事务
+	if err = receiver.Begin(isolationLevels...); err != nil {
+		return
+	}
+
+	// 执行数据库操作
 	exception.Try(func() {
 		executeFn()
-		if receiver.gormDB.Error == nil {
+		if err = routineOrmClient[receiver.dbConfig.dbName].Get().Error; err == nil {
 			receiver.Commit()
 		} else {
 			receiver.Rollback()
@@ -133,13 +142,13 @@ func (receiver *internalContext) Transaction(executeFn func()) {
 
 // Commit 事务提交
 func (receiver *internalContext) Commit() {
-	receiver.gormDB.Commit()
+	routineOrmClient[receiver.dbConfig.dbName].Get().Commit()
 	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 
 // Rollback 事务回滚
 func (receiver *internalContext) Rollback() {
-	receiver.gormDB.Rollback()
+	routineOrmClient[receiver.dbConfig.dbName].Get().Rollback()
 	routineOrmClient[receiver.dbConfig.dbName].Remove()
 }
 

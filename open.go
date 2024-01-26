@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -27,8 +28,16 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 
 		// 连接数据库参考：https://gorm.io/zh_CN/docs/connecting_to_the_database.html
 		// Data Source ClientName 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
+
+		// 禁用默认事务
+		skipDefaultTransaction := true
+		// clickhouse的BUG，必须设为false，则否会出现数据无法写入的问题
+		if strings.ToLower(dbConfig.DataType) == "clickhouse" {
+			skipDefaultTransaction = false
+		}
+
 		gormDB, err := gorm.Open(dbConfig.GetDriver(), &gorm.Config{
-			SkipDefaultTransaction:                   false,
+			SkipDefaultTransaction:                   skipDefaultTransaction,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
 			Logger: logger.New(
 				log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer

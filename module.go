@@ -19,6 +19,9 @@ func (module Module) PreInitialize() {
 }
 
 func (module Module) Initialize() {
+	// 注册mysql驱动
+	container.Register(func() IDataDriver { return &DataDriver{} }, "mysql")
+
 	nodes := configure.GetSubNodes("Database")
 	for key, val := range nodes {
 		configString := val.(string)
@@ -29,8 +32,4 @@ func (module Module) Initialize() {
 		RegisterInternalContext(key, configString)
 	}
 
-	// 注册mysql驱动
-	container.Register(func() IDataDriver {
-		return &DataDriver{}
-	}, "mysql")
 }

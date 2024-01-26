@@ -3,6 +3,9 @@ package test
 import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
+	"github.com/farseer-go/fs/container"
+	"github.com/farseer-go/fs/core"
+	"github.com/farseer-go/fs/exception"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -212,5 +215,67 @@ func TestTableSet(t *testing.T) {
 		assert.Equal(t, "lao", user.Fullname.FirstName)
 		assert.Equal(t, "siji", user.Fullname.LastName)
 		assert.Equal(t, false, user.IsEnable)
+	})
+
+	t.Run("正常事务", func(t *testing.T) {
+		// 清空所有数据
+		_, _ = context.User.Where("Id > ?", 0).WhereIgnoreLessZero("Id = ?", 0).WhereIgnoreNil("Id = ?", nil).Delete()
+
+		// 正常添加用户
+		container.Resolve[core.ITransaction]("test").Transaction(func() {
+			_ = context.User.Insert(&UserPO{
+				Name: "steden",
+				Age:  36,
+				Fullname: FullNameVO{
+					FirstName: "he",
+					LastName:  "steden",
+				},
+				Specialty: collections.NewList("go", "net"),
+				Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
+				Gender:    Man,
+				IsEnable:  true,
+			})
+		})
+
+		u := context.User.Where("name = ?", "steden").ToEntity()
+		count := context.User.Count()
+		assert.Equal(t, "steden", u.Name)
+		assert.Equal(t, int64(1), count)
+
+		// 异常添加用户
+		assert.Panics(t, func() {
+			container.Resolve[core.ITransaction]("test").Transaction(func() {
+				context.User.Insert(&UserPO{
+					Name: "steden2",
+					Age:  38,
+					Fullname: FullNameVO{
+						FirstName: "he2",
+						LastName:  "steden2",
+					},
+					Specialty: collections.NewList("java", "rust"),
+					Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "20"}),
+					Gender:    Man,
+					IsEnable:  true,
+				})
+				exception.ThrowRefuseException("不想添加了")
+				context.User.Insert(&UserPO{
+					Name: "steden3",
+					Age:  40,
+					Fullname: FullNameVO{
+						FirstName: "he3",
+						LastName:  "steden3",
+					},
+					Specialty: collections.NewList("java2", "rust2"),
+					Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "25"}),
+					Gender:    Man,
+					IsEnable:  true,
+				})
+			})
+		})
+
+		u2 := context.User.Where("name = ?", "steden2").ToEntity()
+		count2 := context.User.Count()
+		assert.Equal(t, "", u2.Name)
+		assert.Equal(t, int64(1), count2)
 	})
 }
