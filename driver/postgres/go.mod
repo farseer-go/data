@@ -3,15 +3,15 @@ module github.com/farseer-go/data/driver/postgres
 go 1.19
 
 require (
-	github.com/farseer-go/data v0.12.0
-	github.com/farseer-go/fs v0.12.0
+	github.com/farseer-go/data v0.13.0
+	github.com/farseer-go/fs v0.13.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.5
 )
 
 require (
-	github.com/farseer-go/collections v0.12.0 // indirect
-	github.com/farseer-go/mapper v0.12.0 // indirect
+	github.com/farseer-go/collections v0.13.0 // indirect
+	github.com/farseer-go/mapper v0.13.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
