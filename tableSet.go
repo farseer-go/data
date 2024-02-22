@@ -15,10 +15,12 @@ import (
 
 // TableSet 数据库表操作
 type TableSet[Table any] struct {
-	dbContext *internalContext // 上下文（用指针的方式，共享同一个上下文）
-	tableName string           // 表名
-	ormClient *gorm.DB         // 最外层的ormClient一定是nil的
-	layer     int              // 链式第几层
+	dbContext    *internalContext  // 上下文（用指针的方式，共享同一个上下文）
+	dbName       string            // 库名
+	tableName    string            // 表名
+	nameReplacer *strings.Replacer // 替换dbName、tableName
+	ormClient    *gorm.DB          // 最外层的ormClient一定是nil的
+	layer        int               // 链式第几层
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
 	selectList  collections.ListAny
 	omitList    collections.List[string]
@@ -39,16 +41,19 @@ type whereQuery struct {
 func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
 	receiver.dbContext = dbContext
 	receiver.GetPrimaryName()
+	db := receiver.getOrCreateSession().ormClient
 	// 表名
-	name, exists := param["name"]
-	if exists {
+	if name, exists := param["name"]; exists {
 		receiver.SetTableName(name)
+	} else {
+		receiver.SetTableName(db.Statement.Table)
 	}
-
+	receiver.dbName = db.Migrator().CurrentDatabase()
+	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
 	// 自动创建表
 	migrate, exists := param["migrate"]
 	if exists {
-		db := receiver.getOrCreateSession().ormClient
+
 		// 创建表
 		receiver.CreateTable(db, migrate)
 		// 创建索引
@@ -66,10 +71,8 @@ func (receiver *TableSet[Table]) CreateTable(db *gorm.DB, engine string) {
 	}
 	// 如果继承了IMigrator，则使用自定义的SQL来创建表
 	if mig, exists := any(&entity).(IMigratorCreate); exists {
-		if !db.Migrator().HasTable(db.Statement.Table) {
-			SqlScript := mig.CreateTable()
-			SqlScript = strings.ReplaceAll(SqlScript, "{table}", db.Statement.Table)
-			SqlScript = strings.ReplaceAll(SqlScript, "{database}", db.Migrator().CurrentDatabase())
+		if !db.Migrator().HasTable(receiver.tableName) {
+			SqlScript := receiver.nameReplacer.Replace(mig.CreateTable())
 			receiver.err = db.Exec(SqlScript).Error
 		}
 	} else {
@@ -78,7 +81,6 @@ func (receiver *TableSet[Table]) CreateTable(db *gorm.DB, engine string) {
 	if receiver.err != nil {
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
-
 }
 
 func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
@@ -734,6 +736,7 @@ func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 
 // ExecuteSql 执行自定义SQL
 func (receiver *TableSet[Table]) ExecuteSql(sql string, values ...any) (int64, error) {
+	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.getOrCreateSession().getClient().Exec(sql, values...)
 	return result.RowsAffected, result.Error
 }
@@ -741,6 +744,7 @@ func (receiver *TableSet[Table]) ExecuteSql(sql string, values ...any) (int64, e
 // ExecuteSqlToEntity 返回单个对象(执行自定义SQL)
 func (receiver *TableSet[Table]) ExecuteSqlToEntity(sql string, values ...any) Table {
 	var entity Table
+	sql = receiver.nameReplacer.Replace(sql)
 	receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(&entity)
 	return entity
 }
@@ -748,6 +752,7 @@ func (receiver *TableSet[Table]) ExecuteSqlToEntity(sql string, values ...any) T
 // ExecuteSqlToArray 返回结果集(执行自定义SQL)
 func (receiver *TableSet[Table]) ExecuteSqlToArray(sql string, values ...any) []Table {
 	var lst []Table
+	sql = receiver.nameReplacer.Replace(sql)
 	receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(&lst)
 	return lst
 }
@@ -755,6 +760,7 @@ func (receiver *TableSet[Table]) ExecuteSqlToArray(sql string, values ...any) []
 // ExecuteSqlToList 返回结果集(执行自定义SQL)
 func (receiver *TableSet[Table]) ExecuteSqlToList(sql string, values ...any) collections.List[Table] {
 	var lst []Table
+	sql = receiver.nameReplacer.Replace(sql)
 	receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(&lst)
 	return collections.NewList(lst...)
 }

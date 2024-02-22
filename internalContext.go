@@ -30,6 +30,8 @@ type IInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
+	dbName         string             // 库名
+	nameReplacer   *strings.Replacer  // 替换dbName、tableName
 }
 
 // RegisterInternalContext 注册内部上下文
@@ -87,7 +89,10 @@ func RegisterInternalContext(key string, configString string) {
 	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()
 
 	// 注册上下文
-	container.RegisterInstance[core.ITransaction](&internalContext{dbConfig: &config}, key)
+	ins := &internalContext{dbConfig: &config}
+	ins.dbName = ins.Original().Migrator().CurrentDatabase()
+	ins.nameReplacer = strings.NewReplacer("{database}", ins.dbName)
+	container.RegisterInstance[core.ITransaction](ins, key)
 
 	// 注册健康检查
 	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
@@ -171,12 +176,14 @@ func (receiver *internalContext) Original() *gorm.DB {
 
 // ExecuteSql 执行自定义SQL
 func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, error) {
+	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.Original().Exec(sql, values...)
 	return result.RowsAffected, result.Error
 }
 
 // ExecuteSqlToResult 返回结果(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error) {
+	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.Original().Raw(sql, values...)
 	result.Find(arrayOrEntity)
 	return result.RowsAffected, result.Error
@@ -184,6 +191,7 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 
 // ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values ...any) (int64, error) {
+	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.Original().Raw(sql, values...).Scan(&field)
 	return result.RowsAffected, result.Error
 }
