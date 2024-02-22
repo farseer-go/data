@@ -53,7 +53,6 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	// 自动创建表
 	migrate, exists := param["migrate"]
 	if exists {
-
 		// 创建表
 		receiver.CreateTable(db, migrate)
 		// 创建索引
@@ -96,12 +95,12 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 		idx := mig.CreateIndex()
 		for idxName, idxFields := range idx {
 			// 索引已存在时，不创建
-			if db.Migrator().HasIndex(db.Statement.Table, idxName) {
+			if db.Migrator().HasIndex(receiver.tableName, idxName) {
 				continue
 			}
 
 			// 得到创建索引的SQL脚本
-			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(db.Statement.Table, idxName, idxFields)
+			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(receiver.tableName, idxName, idxFields)
 			// 执行
 			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
