@@ -41,13 +41,16 @@ type whereQuery struct {
 func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
 	receiver.dbContext = dbContext
 	receiver.GetPrimaryName()
-	db := receiver.getOrCreateSession().ormClient
 	// 表名
 	if name, exists := param["name"]; exists {
 		receiver.SetTableName(name)
-	} else {
+	}
+
+	db := receiver.getOrCreateSession().ormClient
+	if receiver.tableName == "" {
 		receiver.SetTableName(db.Statement.Table)
 	}
+
 	receiver.dbName = db.Migrator().CurrentDatabase()
 	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
 	// 自动创建表
