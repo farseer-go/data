@@ -18,17 +18,17 @@ type TableSet[Table any] struct {
 	dbContext    *internalContext  // 上下文（用指针的方式，共享同一个上下文）
 	dbName       string            // 库名
 	tableName    string            // 表名
+	primaryName  string            // 主键字段名称
 	nameReplacer *strings.Replacer // 替换dbName、tableName
 	ormClient    *gorm.DB          // 最外层的ormClient一定是nil的
 	layer        int               // 链式第几层
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
-	selectList  collections.ListAny
-	omitList    collections.List[string]
-	whereList   collections.List[whereQuery]
-	orderList   collections.ListAny
-	limit       int
-	err         error
-	primaryName string
+	selectList collections.ListAny          // 筛选字段
+	omitList   collections.List[string]     // 过滤字段
+	whereList  collections.List[whereQuery] // 条件SQL
+	orderList  collections.ListAny          // 排序SQL
+	limit      int                          // 限制数量
+	err        error                        // 错误
 }
 
 // where条件
@@ -138,16 +138,18 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 		gormDB.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
 		gormDB.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
 		return &TableSet[Table]{
-			dbContext:   receiver.dbContext,
-			tableName:   receiver.tableName,
-			ormClient:   gormDB,
-			err:         receiver.err,
-			layer:       1,
-			selectList:  collections.NewListAny(),
-			omitList:    collections.NewList[string](),
-			whereList:   collections.NewList[whereQuery](),
-			orderList:   collections.NewListAny(),
-			primaryName: receiver.primaryName,
+			dbContext:    receiver.dbContext,
+			dbName:       receiver.dbName,
+			tableName:    receiver.tableName,
+			nameReplacer: receiver.nameReplacer,
+			ormClient:    gormDB,
+			err:          receiver.err,
+			layer:        1,
+			selectList:   collections.NewListAny(),
+			omitList:     collections.NewList[string](),
+			whereList:    collections.NewList[whereQuery](),
+			orderList:    collections.NewListAny(),
+			primaryName:  receiver.primaryName,
 		}
 	}
 
