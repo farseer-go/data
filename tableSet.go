@@ -46,11 +46,21 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 		receiver.SetTableName(name)
 	}
 
-	db := receiver.getOrCreateSession().ormClient
+	// 没有自定义表名时，根据po对象生成
 	if receiver.tableName == "" {
-		receiver.SetTableName(db.Statement.Table)
+		var t Table
+		//_ = db.Statement.Parse(t) // db.Statement.Model
+		//tableName := db.Statement.Schema.Table
+		tableName := reflect.TypeOf(t).Name()
+		if strings.HasSuffix(tableName, "PO") {
+			tableName = tableName[:len(tableName)-2]
+		}
+		tableName = schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", tableName)
+		//tableName = snakeString(tableName)
+		receiver.SetTableName(tableName)
 	}
 
+	db := receiver.getOrCreateSession().ormClient
 	receiver.dbName = db.Migrator().CurrentDatabase()
 	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
 	// 自动创建表
@@ -124,7 +134,8 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			if len(receiver.tableName) > 0 {
 				gormDB = gormDB.Table(receiver.tableName)
 			} else {
-				gormDB = gormDB.Session(&gorm.Session{
+				//var t Table
+				gormDB = gormDB.Session(&gorm.Session{ // .Model(&t)
 					SkipDefaultTransaction: gormDB.SkipDefaultTransaction,
 					Logger:                 gormDB.Logger,
 				})
@@ -283,7 +294,9 @@ func (receiver *TableSet[Table]) WhereLt(columnName any, args any) *TableSet[Tab
 		args:  []any{args},
 	})
 	return session
-} // WhereLte 小于等于条件
+}
+
+// WhereLte 小于等于条件
 func (receiver *TableSet[Table]) WhereLte(columnName any, args any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
@@ -291,7 +304,9 @@ func (receiver *TableSet[Table]) WhereLte(columnName any, args any) *TableSet[Ta
 		args:  []any{args},
 	})
 	return session
-} // WhereIn in条件
+}
+
+// WhereIn in条件
 func (receiver *TableSet[Table]) WhereIn(columnName any, args ...any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
@@ -299,7 +314,9 @@ func (receiver *TableSet[Table]) WhereIn(columnName any, args ...any) *TableSet[
 		args:  args,
 	})
 	return session
-} // WhereLike like条件("%?%")
+}
+
+// WhereLike like条件("%?%")
 func (receiver *TableSet[Table]) WhereLike(columnName any, args any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
@@ -794,6 +811,11 @@ func (receiver *TableSet[Table]) GetPrimaryName() {
 	return
 }
 
+// Clickhouse 返回Clickhouse的对象
+func (receiver *TableSet[Table]) Clickhouse() *mergeTreeSet {
+	return newClickhouse(receiver.getOrCreateSession())
+}
+
 // 大写字母，转蛇形
 func snakeString(s string) string {
 	data := make([]byte, 0, len(s)*2)
@@ -814,9 +836,4 @@ func snakeString(s string) string {
 	}
 	// 统一转小写
 	return strings.ToLower(string(data[:]))
-}
-
-// Clickhouse 返回Clickhouse的对象
-func (receiver *TableSet[Table]) Clickhouse() *mergeTreeSet {
-	return newClickhouse(receiver.getOrCreateSession())
 }
