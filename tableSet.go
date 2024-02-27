@@ -1,10 +1,12 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
+	"github.com/go-sql-driver/mysql"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -548,6 +550,21 @@ func (receiver *TableSet[Table]) IsExists() bool {
 // Insert 新增记录
 func (receiver *TableSet[Table]) Insert(po *Table) error {
 	result := receiver.getOrCreateSession().getClient().Create(po)
+	return result.Error
+}
+
+// InsertIgnoreDuplicateKey 新增记录，忽略重复主键、唯一键约束错误
+func (receiver *TableSet[Table]) InsertIgnoreDuplicateKey(po *Table) error {
+	result := receiver.getOrCreateSession().getClient().Create(po)
+	var dbErr *mysql.MySQLError
+	switch {
+	case errors.As(result.Error, &dbErr):
+		// Duplicate entry 'aaa' for key 'account.PRIMARY'
+		// Duplicate entry '8' for key 'account.idx_age'
+		if dbErr.Number == 1062 {
+			result.Error = nil
+		}
+	}
 	return result.Error
 }
 
