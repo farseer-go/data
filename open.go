@@ -18,7 +18,7 @@ var lock sync.Mutex
 
 // 打开数据库（全局）
 func open(dbConfig *dbConfig) (*gorm.DB, error) {
-	db, exists := databaseConn[dbConfig.dbName]
+	db, exists := databaseConn[dbConfig.keyName]
 	// 不存在，则创建
 	if !exists {
 		lock.Lock()
@@ -58,7 +58,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		}
 
 		setPool(gormDB, dbConfig)
-		databaseConn[dbConfig.dbName] = gormDB
+		databaseConn[dbConfig.keyName] = gormDB
 		db = gormDB
 	}
 	return db, nil

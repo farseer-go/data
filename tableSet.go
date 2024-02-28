@@ -65,9 +65,9 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	db := receiver.getOrCreateSession().ormClient
 	receiver.dbName = db.Migrator().CurrentDatabase()
 	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
+
 	// 自动创建表
-	migrate, exists := param["migrate"]
-	if exists {
+	if migrate, exists := param["migrate"]; exists {
 		// 创建表
 		receiver.CreateTable(db, migrate)
 		// 创建索引
@@ -106,6 +106,7 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 			panic(fmt.Sprintf("要使用%s，请加载模块：对应的驱动，通常位置在：github.com/farseer-go/data/driver/%s", receiver.dbContext.dbConfig.DataType, receiver.dbContext.dbConfig.DataType))
 		}
 
+		dataDriver := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType)
 		// 得到要创建的索引字段
 		idx := mig.CreateIndex()
 		for idxName, idxFields := range idx {
@@ -115,7 +116,7 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 			}
 
 			// 得到创建索引的SQL脚本
-			sqlScript := container.Resolve[IDataDriver](receiver.dbContext.dbConfig.DataType).CreateIndex(receiver.tableName, idxName, idxFields)
+			sqlScript := dataDriver.CreateIndex(receiver.tableName, idxName, idxFields)
 			// 执行
 			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
@@ -128,7 +129,7 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 	if receiver.layer == 0 {
 		// 先从上下文中读取事务
-		gormDB := routineOrmClient[receiver.dbContext.dbConfig.dbName].Get()
+		gormDB := routineOrmClient[receiver.dbContext.dbConfig.keyName].Get()
 
 		// 上下文没有开启事务
 		if gormDB == nil {

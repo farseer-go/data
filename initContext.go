@@ -13,17 +13,18 @@ import (
 type IDbContext interface{}
 
 // NewContext 数据库上下文初始化
-// dbName：数据库配置名称，对应./farseer.yaml 中的 Database节点
+// keyName：数据库配置名称，对应./farseer.yaml 中的 Database节点
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
 func NewContext[TDbContext IDbContext](dbName string) *TDbContext {
 	var context TDbContext
 	InitContext(&context, dbName)
+
 	return &context
 }
 
 // InitContext 数据库上下文初始化
-// dbName：数据库配置名称
+// keyName：数据库配置名称
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
 func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName string) {

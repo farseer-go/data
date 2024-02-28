@@ -8,7 +8,7 @@ import (
 
 // 数据库配置
 type dbConfig struct {
-	dbName           string
+	keyName          string
 	DataType         string
 	PoolMaxSize      int
 	PoolMinSize      int

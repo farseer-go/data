@@ -49,7 +49,7 @@ func RegisterInternalContext(key string, configString string) {
 		panic("[farseer.yaml]Database." + key + ".DataType，配置不正确：" + configString)
 	}
 	config.DataType = strings.ToLower(config.DataType)
-	config.dbName = key
+	config.keyName = key
 
 	// 获取数据库名称
 	switch config.DataType {
@@ -90,8 +90,8 @@ func RegisterInternalContext(key string, configString string) {
 
 	// 注册上下文
 	ins := &internalContext{dbConfig: &config}
-	ins.dbName = ins.Original().Migrator().CurrentDatabase()
-	ins.nameReplacer = strings.NewReplacer("{database}", ins.dbName)
+	ins.dbName = config.databaseName
+	ins.nameReplacer = strings.NewReplacer("{database}", config.databaseName)
 	container.RegisterInstance[core.ITransaction](ins, key)
 
 	// 注册健康检查
@@ -106,7 +106,7 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) er
 		isolationLevel = isolationLevels[0]
 	}
 
-	if routineOrmClient[receiver.dbConfig.dbName].Get() == nil {
+	if routineOrmClient[receiver.dbConfig.keyName].Get() == nil {
 		gormDB, err := open(receiver.dbConfig)
 		if err != nil {
 			return err
@@ -115,7 +115,7 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) er
 		gormDB = gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
 			Isolation: isolationLevel,
 		})
-		routineOrmClient[receiver.dbConfig.dbName].Set(gormDB)
+		routineOrmClient[receiver.dbConfig.keyName].Set(gormDB)
 	}
 	return nil
 }
@@ -134,7 +134,7 @@ func (receiver *internalContext) Transaction(executeFn func(), isolationLevels .
 	// 执行数据库操作
 	exception.Try(func() {
 		executeFn()
-		if err = routineOrmClient[receiver.dbConfig.dbName].Get().Error; err == nil {
+		if err = routineOrmClient[receiver.dbConfig.keyName].Get().Error; err == nil {
 			receiver.Commit()
 		} else {
 			receiver.Rollback()
@@ -147,19 +147,19 @@ func (receiver *internalContext) Transaction(executeFn func(), isolationLevels .
 
 // Commit 事务提交
 func (receiver *internalContext) Commit() {
-	routineOrmClient[receiver.dbConfig.dbName].Get().Commit()
-	routineOrmClient[receiver.dbConfig.dbName].Remove()
+	routineOrmClient[receiver.dbConfig.keyName].Get().Commit()
+	routineOrmClient[receiver.dbConfig.keyName].Remove()
 }
 
 // Rollback 事务回滚
 func (receiver *internalContext) Rollback() {
-	routineOrmClient[receiver.dbConfig.dbName].Get().Rollback()
-	routineOrmClient[receiver.dbConfig.dbName].Remove()
+	routineOrmClient[receiver.dbConfig.keyName].Get().Rollback()
+	routineOrmClient[receiver.dbConfig.keyName].Remove()
 }
 
 // Original 返回原生的对象
 func (receiver *internalContext) Original() *gorm.DB {
-	gormDB := routineOrmClient[receiver.dbConfig.dbName].Get()
+	gormDB := routineOrmClient[receiver.dbConfig.keyName].Get()
 	var err error
 
 	// 上下文没有开启事务
