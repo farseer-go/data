@@ -671,6 +671,23 @@ func (receiver *TableSet[Table]) GetString(fieldName string) string {
 	return val
 }
 
+// GetStrings 获取string字段的集合
+func (receiver *TableSet[Table]) GetStrings(fieldName string) collections.List[string] {
+	lst := collections.NewList[string]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val string
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
+}
+
 // GetInt 获取单条记录中的单个int类型字段值
 func (receiver *TableSet[Table]) GetInt(fieldName string) int {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
@@ -686,6 +703,23 @@ func (receiver *TableSet[Table]) GetInt(fieldName string) int {
 		_ = rows.Scan(&val)
 	}
 	return val
+}
+
+// GetInts 获取int字段的集合
+func (receiver *TableSet[Table]) GetInts(fieldName string) collections.List[int] {
+	lst := collections.NewList[int]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val int
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
 }
 
 // GetLong 获取单条记录中的单个int64类型字段值
@@ -705,6 +739,23 @@ func (receiver *TableSet[Table]) GetLong(fieldName string) int64 {
 	return val
 }
 
+// GetLongs 获取long字段的集合
+func (receiver *TableSet[Table]) GetLongs(fieldName string) collections.List[int64] {
+	lst := collections.NewList[int64]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val int64
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
+}
+
 // GetBool 获取单条记录中的单个bool类型字段值
 func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
@@ -720,6 +771,23 @@ func (receiver *TableSet[Table]) GetBool(fieldName string) bool {
 		_ = rows.Scan(&val)
 	}
 	return val
+}
+
+// GetBools 获取bool字段的集合
+func (receiver *TableSet[Table]) GetBools(fieldName string) collections.List[bool] {
+	lst := collections.NewList[bool]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val bool
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
 }
 
 // GetFloat32 获取单条记录中的单个float32类型字段值
@@ -739,6 +807,23 @@ func (receiver *TableSet[Table]) GetFloat32(fieldName string) float32 {
 	return val
 }
 
+// GetFloat32s 获取float32字段的集合
+func (receiver *TableSet[Table]) GetFloat32s(fieldName string) collections.List[float32] {
+	lst := collections.NewList[float32]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val float32
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
+}
+
 // GetFloat64 获取单条记录中的单个float64类型字段值
 func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
@@ -756,6 +841,23 @@ func (receiver *TableSet[Table]) GetFloat64(fieldName string) float64 {
 	return val
 }
 
+// GetFloat64s 获取float64字段的集合
+func (receiver *TableSet[Table]) GetFloat64s(fieldName string) collections.List[float64] {
+	lst := collections.NewList[float64]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val float64
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
+}
+
 // GetDecimal 获取单条记录中的单个decimal.Decimal类型字段值
 func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
@@ -771,6 +873,23 @@ func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 		_ = rows.Scan(&val)
 	}
 	return val
+}
+
+// GetDecimals 获取string字段的集合
+func (receiver *TableSet[Table]) GetDecimals(fieldName string) collections.List[decimal.Decimal] {
+	lst := collections.NewList[decimal.Decimal]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val decimal.Decimal
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
 }
 
 // ExecuteSql 执行自定义SQL

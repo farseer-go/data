@@ -162,27 +162,47 @@ func TestTableSet(t *testing.T) {
 
 	t.Run("GetString", func(t *testing.T) {
 		assert.Equal(t, "steden", context.User.Where("Name = ?", "steden").GetString("Name"))
+
+		lst := context.User.Asc("Name").GetStrings("Name")
+		assert.Equal(t, 2, lst.Count())
+		assert.Equal(t, "harlen", lst.Index(0))
+		assert.Equal(t, "steden", lst.Index(1))
 	})
 
 	t.Run("GetInt", func(t *testing.T) {
 		assert.Less(t, 1, context.User.Where("Name = ?", "steden").GetInt("Id"))
+
+		lst := context.User.Asc("Name").GetInts("Id")
+		assert.Equal(t, 2, lst.Count())
 	})
 
 	t.Run("GetLong", func(t *testing.T) {
 		assert.Less(t, int64(1), context.User.Where("Name = ?", "steden").GetLong("Id"))
+
+		lst := context.User.Asc("Name").GetLongs("Id")
+		assert.Equal(t, 2, lst.Count())
 	})
 
 	t.Run("GetFloat32", func(t *testing.T) {
 		assert.Less(t, float32(1), context.User.Where("Name = ?", "steden").GetFloat32("Id"))
+
+		lst := context.User.Asc("Name").GetFloat32s("Id")
+		assert.Equal(t, 2, lst.Count())
 	})
 
 	t.Run("GetFloat64", func(t *testing.T) {
 		assert.Less(t, float64(1), context.User.Where("Name = ?", "steden").GetFloat64("Id"))
+
+		lst := context.User.Asc("Name").GetFloat64s("Id")
+		assert.Equal(t, 2, lst.Count())
 	})
 
-	t.Run("GetFloat64", func(t *testing.T) {
+	t.Run("GetBool", func(t *testing.T) {
 		assert.True(t, context.User.Where("Name = ?", "steden").GetBool("Is_Enable"))
 		assert.False(t, context.User.Where("Name = ?", "harlen").GetBool("Is_Enable"))
+
+		lst := context.User.Asc("Name").GetBools("Id")
+		assert.Equal(t, 2, lst.Count())
 	})
 
 	t.Run("UpdateValue", func(t *testing.T) {
