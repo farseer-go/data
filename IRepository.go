@@ -8,6 +8,8 @@ type IRepository[TDomainObject any] interface {
 	ToEntity(id any) TDomainObject
 	// Add 添加实体
 	Add(entity TDomainObject) error
+	// AddList 批量添加
+	AddList(lst collections.List[TDomainObject], batchSize int) (int64, error)
 	// ToList 获取所有列表
 	ToList() collections.List[TDomainObject]
 	// ToPageList 分页列表
