@@ -106,17 +106,19 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) er
 		isolationLevel = isolationLevels[0]
 	}
 
-	if routineOrmClient[receiver.dbConfig.keyName].Get() == nil {
-		gormDB, err := open(receiver.dbConfig)
-		if err != nil {
-			return err
-		}
-		// 开启事务
-		gormDB = gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
-			Isolation: isolationLevel,
-		})
-		routineOrmClient[receiver.dbConfig.keyName].Set(gormDB)
+	if routineOrmClient[receiver.dbConfig.keyName].Get() != nil {
+		exception.ThrowException("不支持两个事务同时运行，请先将上一个事物提交后在运行下一个。")
 	}
+
+	gormDB, err := open(receiver.dbConfig)
+	if err != nil {
+		return err
+	}
+	// 开启事务
+	gormDB = gormDB.Session(&gorm.Session{}).Begin(&sql.TxOptions{
+		Isolation: isolationLevel,
+	})
+	routineOrmClient[receiver.dbConfig.keyName].Set(gormDB)
 	return nil
 }
 
