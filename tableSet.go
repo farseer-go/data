@@ -1,12 +1,10 @@
 package data
 
 import (
-	"errors"
 	"fmt"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
-	"github.com/go-sql-driver/mysql"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -554,20 +552,26 @@ func (receiver *TableSet[Table]) Insert(po *Table) error {
 	return result.Error
 }
 
-// InsertIgnoreDuplicateKey 新增记录，忽略重复主键、唯一键约束错误
-func (receiver *TableSet[Table]) InsertIgnoreDuplicateKey(po *Table) error {
-	result := receiver.getOrCreateSession().getClient().Create(po)
-	var dbErr *mysql.MySQLError
-	switch {
-	case errors.As(result.Error, &dbErr):
-		// Duplicate entry 'aaa' for key 'account.PRIMARY'
-		// Duplicate entry '8' for key 'account.idx_age'
-		if dbErr.Number == 1062 {
-			result.Error = nil
-		}
-	}
+// InsertIgnore 新增记录（忽略主键、唯一键存在的记录）
+func (receiver *TableSet[Table]) InsertIgnore(po *Table) error {
+	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).Create(po)
 	return result.Error
 }
+
+//// InsertIgnoreDuplicateKey 新增记录，忽略重复主键、唯一键约束错误
+//func (receiver *TableSet[Table]) InsertIgnoreDuplicateKey(po *Table) error {
+//	result := receiver.getOrCreateSession().getClient().Create(po)
+//	var dbErr *mysql.MySQLError
+//	switch {
+//	case errors.As(result.Error, &dbErr):
+//		// Duplicate entry 'aaa' for key 'account.PRIMARY'
+//		// Duplicate entry '8' for key 'account.idx_age'
+//		if dbErr.Number == 1062 {
+//			result.Error = nil
+//		}
+//	}
+//	return result.Error
+//}
 
 // InsertList 批量新增记录
 func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) (int64, error) {
@@ -576,6 +580,16 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 		batchSize = lst.Count()
 	}
 	result := receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
+	return result.RowsAffected, result.Error
+}
+
+// InsertIgnoreList 批量新增记录（忽略主键、唯一键存在的记录）
+func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], batchSize int) (int64, error) {
+	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
+	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		batchSize = lst.Count()
+	}
+	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).CreateInBatches(lst.ToArray(), batchSize)
 	return result.RowsAffected, result.Error
 }
 
