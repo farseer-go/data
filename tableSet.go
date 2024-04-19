@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm/schema"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // TableSet 数据库表操作
@@ -889,7 +890,7 @@ func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 	return val
 }
 
-// GetDecimals 获取string字段的集合
+// GetDecimals 获取decimal.Decimal字段的集合
 func (receiver *TableSet[Table]) GetDecimals(fieldName string) collections.List[decimal.Decimal] {
 	lst := collections.NewList[decimal.Decimal]()
 	result := receiver.getOrCreateSession().getClient().Select(fieldName)
@@ -899,6 +900,40 @@ func (receiver *TableSet[Table]) GetDecimals(fieldName string) collections.List[
 	}
 	defer rows.Close()
 	var val decimal.Decimal
+	for rows.Next() {
+		_ = rows.Scan(&val)
+		lst.Add(val)
+	}
+	return lst
+}
+
+// GetTime 获取单条记录中的单个time.Time类型字段值
+func (receiver *TableSet[Table]) GetTime(fieldName string) time.Time {
+	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return time.Time{}
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	var val time.Time
+	for rows.Next() {
+		_ = rows.Scan(&val)
+	}
+	return val
+}
+
+// GetTimes 获取time.Time字段的集合
+func (receiver *TableSet[Table]) GetTimes(fieldName string) collections.List[time.Time] {
+	lst := collections.NewList[time.Time]()
+	result := receiver.getOrCreateSession().getClient().Select(fieldName)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return lst
+	}
+	defer rows.Close()
+	var val time.Time
 	for rows.Next() {
 		_ = rows.Scan(&val)
 		lst.Add(val)
