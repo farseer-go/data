@@ -33,6 +33,14 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) AddList(lst collectio
 	return receiver.table.InsertList(lstPO, batchSize)
 }
 
+func (receiver *DefaultRepository[TPoType, TDomainObject]) AddIgnoreList(lst collections.List[TDomainObject], batchSize int) (int64, error) {
+	var lstPO collections.List[TPoType]
+	lst.Select(&lstPO, func(entity TDomainObject) any {
+		return mapper.Single[TPoType](&entity)
+	})
+	return receiver.table.InsertIgnoreList(lstPO, batchSize)
+}
+
 func (receiver *DefaultRepository[TPoType, TDomainObject]) ToList() collections.List[TDomainObject] {
 	// 从数据库读数据
 	lstProduct := receiver.table.ToList()

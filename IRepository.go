@@ -10,6 +10,8 @@ type IRepository[TDomainObject any] interface {
 	Add(entity TDomainObject) error
 	// AddList 批量添加
 	AddList(lst collections.List[TDomainObject], batchSize int) (int64, error)
+	// AddIgnoreList 批量添加
+	AddIgnoreList(lst collections.List[TDomainObject], batchSize int) (int64, error)
 	// ToList 获取所有列表
 	ToList() collections.List[TDomainObject]
 	// ToPageList 分页列表
