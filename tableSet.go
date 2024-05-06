@@ -941,6 +941,12 @@ func (receiver *TableSet[Table]) GetTimes(fieldName string) collections.List[tim
 	return lst
 }
 
+func (receiver *TableSet[Table]) TruncateTable() error {
+	sql := fmt.Sprintf("truncate TABLE %s;OPTIMIZE TABLE %s;", receiver.tableName, receiver.tableName)
+	_, err := receiver.ExecuteSql(sql)
+	return err
+}
+
 // ExecuteSql 执行自定义SQL
 func (receiver *TableSet[Table]) ExecuteSql(sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
