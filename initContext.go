@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// 继承多租户时，默认仓库可以找到正确的上下文
+var getInternalContextType = reflect.TypeOf((*IGetInternalContext)(nil)).Elem()
+var emptyGetInternalContextVal = reflect.New(getInternalContextType).Elem()
+
 // IDbContext 数据库上下文
 type IDbContext interface{}
 
@@ -36,9 +40,14 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 	if transaction == nil {
 		flog.Panicf("初始化TDbContext失败，请确认./farseer.yaml配置文件中的Database.%s是否正确", dbName)
 	}
-	internalContextIns := transaction.(*internalContext)
-	internalContextType := reflect.ValueOf(internalContextIns)
+	internalContextType := reflect.ValueOf(transaction.(*internalContext))
 	contextValueOf := reflect.ValueOf(repositoryContext).Elem()
+
+	// 是否有单独的获取上下文的实现（用于多租户时，默认仓库可以找到正确的上下文）
+	getInternalContextVal := emptyGetInternalContextVal
+	if reflect.TypeOf(repositoryContext).Implements(getInternalContextType) {
+		getInternalContextVal = reflect.ValueOf(any(repositoryContext).(IGetInternalContext))
+	}
 
 	// 遍历上下文中的TableSet字段类型
 	for i := 0; i < contextValueOf.NumField(); i++ {
@@ -62,8 +71,13 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 						param[arrKV[0]] = ""
 					}
 				}
-				// 再取tableSet的子属性，并设置值
-				field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(param)})
+				if isDataDomainSet {
+					// 再取tableSet的子属性，并设置值
+					field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(param), getInternalContextVal})
+				} else if isDataTableSet {
+					// 再取tableSet的子属性，并设置值
+					field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(param)})
+				}
 			} else if field.Type().String() == "core.ITransaction" || field.Type().String() == "data.IInternalContext" {
 				field.Set(internalContextType)
 			}

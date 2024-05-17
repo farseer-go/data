@@ -26,6 +26,10 @@ type IInternalContext interface {
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
 }
 
+type IGetInternalContext interface {
+	GetInternalContext() IInternalContext
+}
+
 // internalContext 数据库上下文
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
@@ -196,4 +200,8 @@ func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values
 	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.Original().Raw(sql, values...).Scan(&field)
 	return result.RowsAffected, result.Error
+}
+
+func (receiver *internalContext) GetInternalContext() IInternalContext {
+	return receiver
 }

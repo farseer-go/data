@@ -40,6 +40,7 @@ type whereQuery struct {
 
 // Init 在反射的时候会调用此方法
 func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[string]string) {
+	//receiver.dbContext = dbContext.GetInternalContext()
 	receiver.dbContext = dbContext
 	receiver.GetPrimaryName()
 	// 表名
@@ -121,6 +122,20 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
 			}
 		}
+	}
+}
+
+func (receiver *TableSet[Table]) setDbContext(getInternalContext IGetInternalContext) *TableSet[Table] {
+	if getInternalContext == nil {
+		return receiver
+	}
+
+	return &TableSet[Table]{
+		dbContext:    getInternalContext.GetInternalContext().(*internalContext),
+		dbName:       receiver.dbName,
+		tableName:    receiver.tableName,
+		primaryName:  receiver.primaryName,
+		nameReplacer: receiver.nameReplacer,
 	}
 }
 
