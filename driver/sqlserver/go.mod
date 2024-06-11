@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/farseer-go/data v0.13.0
-	github.com/farseer-go/fs v0.13.0
+	github.com/farseer-go/fs v0.14.0
 	gorm.io/driver/sqlserver v1.5.3
 	gorm.io/gorm v1.25.10
 )
