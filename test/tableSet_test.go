@@ -127,19 +127,30 @@ func TestTableSet(t *testing.T) {
 	})
 
 	t.Run("ToPageList", func(t *testing.T) {
-		lst := context.User.Where("Age > 10").Asc("Age").ToPageList(1, 1)
+		ts := context.User.Where("Age > 10")
+		lst := ts.Asc("Age").ToPageList(1, 1)
 		assert.Equal(t, int64(2), lst.RecordCount)
 		assert.Equal(t, 1, lst.List.Count())
 		assert.Equal(t, "harlen", lst.List.First().Name)
 
-		lst = context.User.Where("Age > 10").Asc("Age").ToPageList(1, 2)
+		ts = context.User.Where("Age > 10")
+		lst = ts.Asc("Age").ToPageList(1, 2)
 		assert.Equal(t, int64(2), lst.RecordCount)
 		assert.Equal(t, 1, lst.List.Count())
 		assert.Equal(t, "steden", lst.List.First().Name)
 
-		lst = context.User.Where("Age > 10").Desc("Age").ToPageList(1, 1)
+		ts = context.User.Where("Age > 10")
+		lst = ts.Desc("Age").ToPageList(1, 1)
 		assert.Equal(t, int64(2), lst.RecordCount)
 		assert.Equal(t, 1, lst.List.Count())
+		assert.Equal(t, "steden", lst.List.First().Name)
+
+		ts = context.User.Where("Age > 10")
+		pageSize := 15
+		pageIndex := 1
+		lst = ts.Desc("Age").ToPageList(pageSize, pageIndex)
+		assert.Equal(t, int64(2), lst.RecordCount)
+		assert.Equal(t, 2, lst.List.Count())
 		assert.Equal(t, "steden", lst.List.First().Name)
 	})
 
