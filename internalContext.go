@@ -128,6 +128,11 @@ func (receiver *internalContext) Begin(isolationLevels ...sql.IsolationLevel) er
 
 // Transaction 使用事务
 func (receiver *internalContext) Transaction(executeFn func(), isolationLevels ...sql.IsolationLevel) {
+	if routineOrmClient[receiver.dbConfig.keyName].Get() != nil {
+		executeFn()
+		return
+	}
+
 	var err error
 	traceHand := container.Resolve[trace.IManager]().TraceHand("开启事务")
 	defer func() { traceHand.End(err) }()
