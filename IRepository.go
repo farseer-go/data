@@ -8,9 +8,11 @@ type IRepository[TDomainObject any] interface {
 	ToEntity(id any) TDomainObject
 	// Add 添加实体
 	Add(entity TDomainObject) error
+	// AddIgnore 添加实体（忽略主键存在的记录）
+	AddIgnore(entity TDomainObject) error
 	// AddList 批量添加
 	AddList(lst collections.List[TDomainObject], batchSize int) (int64, error)
-	// AddIgnoreList 批量添加
+	// AddIgnoreList 批量添加（忽略主键存在的记录）
 	AddIgnoreList(lst collections.List[TDomainObject], batchSize int) (int64, error)
 	// ToList 获取所有列表
 	ToList() collections.List[TDomainObject]

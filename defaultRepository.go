@@ -6,7 +6,7 @@ import (
 )
 
 type DefaultRepository[TPoType any, TDomainObject any] struct {
-	primaryName        string
+	primaryName        []string
 	table              TableSet[TPoType]
 	getInternalContext IGetInternalContext
 }
@@ -16,7 +16,7 @@ func NewDefaultRepository[TPoType any, TDomainObject any](table TableSet[TPoType
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) ToEntity(id any) TDomainObject {
-	po := receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName, id).ToEntity()
+	po := receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName[0], id).ToEntity()
 	// po 转 do
 	return mapper.Single[TDomainObject](&po)
 }
@@ -24,6 +24,11 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) ToEntity(id any) TDom
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Add(entity TDomainObject) error {
 	po := mapper.Single[TPoType](&entity)
 	return receiver.table.setDbContext(receiver.getInternalContext).Insert(&po)
+}
+
+func (receiver *DefaultRepository[TPoType, TDomainObject]) AddIgnore(entity TDomainObject) error {
+	po := mapper.Single[TPoType](&entity)
+	return receiver.table.setDbContext(receiver.getInternalContext).InsertIgnore(&po)
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) AddList(lst collections.List[TDomainObject], batchSize int) (int64, error) {
@@ -51,7 +56,11 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) ToList() collections.
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) ToPageList(pageSize, pageIndex int) collections.PageList[TDomainObject] {
 	// 从数据库读数据
-	lstOrder := receiver.table.setDbContext(receiver.getInternalContext).Desc(receiver.primaryName).ToPageList(pageSize, pageIndex)
+	ts := receiver.table.setDbContext(receiver.getInternalContext)
+	for _, fieldName := range receiver.primaryName {
+		ts.Desc(fieldName)
+	}
+	lstOrder := ts.ToPageList(pageSize, pageIndex)
 
 	// po 转 do
 	return mapper.ToPageList[TDomainObject](lstOrder)
@@ -64,13 +73,13 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Count() int64 {
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Update(id any, do TDomainObject) (int64, error) {
 	po := mapper.Single[TPoType](do)
-	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName, id).Update(po)
+	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName[0], id).Update(po)
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Delete(id any) (int64, error) {
-	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName, id).Delete()
+	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName[0], id).Delete()
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) IsExists(id any) bool {
-	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName, id).IsExists()
+	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName[0], id).IsExists()
 }

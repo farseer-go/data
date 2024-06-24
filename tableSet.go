@@ -19,7 +19,7 @@ type TableSet[Table any] struct {
 	dbContext    *internalContext  // 上下文（用指针的方式，共享同一个上下文）
 	dbName       string            // 库名
 	tableName    string            // 表名
-	primaryName  string            // 主键字段名称
+	primaryName  []string          // 主键字段名称
 	nameReplacer *strings.Replacer // 替换dbName、tableName
 	ormClient    *gorm.DB          // 最外层的ormClient一定是nil的
 	layer        int               // 链式第几层
@@ -609,15 +609,6 @@ func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], b
 	return result.RowsAffected, result.Error
 }
 
-// Update 修改记录
-// 如果只更新部份字段，需使用Select进行筛选
-func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
-	mapPO := ToMap(po)
-	//result := receiver.getOrCreateSession().getClient().Save(po)
-	result := receiver.getOrCreateSession().getClient().Updates(mapPO)
-	return result.RowsAffected, result.Error
-}
-
 // Expr 对字段做表达式操作
 //
 //	exp: Expr("price", "price * ? + ?", 2, 100)
@@ -658,7 +649,22 @@ func (receiver *TableSet[Table]) Exprs(fields map[string][]any) (int64, error) {
 	return rowsAffected, err
 }
 
-// UpdateOrInsert 记录存在时更新，不存在时插入
+// Update 修改记录
+// 如果只更新部份字段，需使用Select进行筛选
+func (receiver *TableSet[Table]) Update(po Table) (int64, error) {
+	mapPO := ToMap(po)
+	//result := receiver.getOrCreateSession().getClient().Save(po)
+	result := receiver.getOrCreateSession().getClient().Updates(mapPO)
+	return result.RowsAffected, result.Error
+}
+
+// UpdateOrInsertByPrimary 记录存在时（根据主键判断）更新，不存在时插入
+func (receiver *TableSet[Table]) UpdateOrInsertByPrimary(po Table) error {
+	return receiver.UpdateOrInsert(po, receiver.primaryName...)
+}
+
+// UpdateOrInsert 记录存在时（根据Fields判断）更新，不存在时插入
+// fields：唯一键 或 主键，即由哪些字段组成的条件为存在或不存在判定
 func (receiver *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) error {
 	// []string转[]clause.Column
 	var clos []clause.Column
@@ -1007,12 +1013,11 @@ func (receiver *TableSet[Table]) GetPrimaryName() {
 		field := tableType.Field(i)
 		fieldTags := schema.ParseTagSetting(field.Tag.Get("gorm"), ";")
 		if _, existsPrimaryKey := fieldTags["PRIMARYKEY"]; existsPrimaryKey {
+			fieldName := schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", field.Name)
 			if c, existsColumn := fieldTags["COLUMN"]; existsColumn {
-				receiver.primaryName = c
-				return
+				fieldName = c
 			}
-			receiver.primaryName = schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", field.Name)
-			return
+			receiver.primaryName = append(receiver.primaryName, fieldName)
 		}
 	}
 	return
