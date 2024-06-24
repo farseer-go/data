@@ -17,6 +17,7 @@ exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
 //replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
 
 exclude github.com/timandy/routine v1.1.3
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/ClickHouse/ch-go v0.61.5 // indirect
