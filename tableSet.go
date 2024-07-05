@@ -274,11 +274,23 @@ func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] 
 }
 
 // WhereFindInSet FIND_IN_SET条件
+// FIND_IN_SET (fieldValue,fieldName)
 func (receiver *TableSet[Table]) WhereFindInSet(fieldName string,fieldValue string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
 		query: fmt.Sprintf("FIND_IN_SET ('%s' ,%s)", fieldValue, fieldName),
 		args:  nil,
+	})
+	return session
+}
+
+// WhereFindInSet FIND_IN_SET条件
+// FIND_IN_SET (fieldValue,fieldName) or orFieldName = orFieldValue
+func (receiver *TableSet[Table]) WhereFindInSetOrEq(fieldName ,fieldValue , orFieldName string, orFieldValue any) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("(FIND_IN_SET ('%s' ,%s) OR %s = ?)", fieldValue, fieldName, orFieldName),
+		args:  []any{orFieldValue},
 	})
 	return session
 }
