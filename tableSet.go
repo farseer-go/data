@@ -273,6 +273,16 @@ func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] 
 	return session
 }
 
+// WhereFindInSet FIND_IN_SET条件
+func (receiver *TableSet[Table]) WhereFindInSet(fieldName string,fieldValue string) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.whereList.Add(whereQuery{
+		query: fmt.Sprintf("FIND_IN_SET ('%s' ,%s)", fieldValue, fieldName),
+		args:  nil,
+	})
+	return session
+}
+
 // WhereEq 条件
 func (receiver *TableSet[Table]) WhereEq(columnName any, args any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
