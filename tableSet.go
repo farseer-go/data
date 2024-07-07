@@ -273,13 +273,17 @@ func (receiver *TableSet[Table]) Omit(columns ...string) *TableSet[Table] {
 }
 
 // ForceIndex 强制使用索引
-func (receiver *TableSet[Table]) ForceIndex(idxName string) {
-	receiver.forceIndexName = idxName
+func (receiver *TableSet[Table]) ForceIndex(idxName string) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.forceIndexName = idxName
+	return session
 }
 
 // UseIndex 推荐使用索引
-func (receiver *TableSet[Table]) UseIndex(idxName string) {
-	receiver.useIndexName = idxName
+func (receiver *TableSet[Table]) UseIndex(idxName string) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.useIndexName = idxName
+	return session
 }
 
 // Where 条件
