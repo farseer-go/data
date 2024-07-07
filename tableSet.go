@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
+	"gorm.io/hints"
 	"reflect"
 	"strings"
 	"time"
@@ -16,13 +17,15 @@ import (
 
 // TableSet 数据库表操作
 type TableSet[Table any] struct {
-	dbContext    *internalContext  // 上下文（用指针的方式，共享同一个上下文）
-	dbName       string            // 库名
-	tableName    string            // 表名
-	primaryName  []string          // 主键字段名称
-	nameReplacer *strings.Replacer // 替换dbName、tableName
-	ormClient    *gorm.DB          // 最外层的ormClient一定是nil的
-	layer        int               // 链式第几层
+	dbContext      *internalContext  // 上下文（用指针的方式，共享同一个上下文）
+	dbName         string            // 库名
+	tableName      string            // 表名
+	forceIndexName string            // 强制索引名称
+	useIndexName   string            // 推荐使用索引名称
+	primaryName    []string          // 主键字段名称
+	nameReplacer   *strings.Replacer // 替换dbName、tableName
+	ormClient      *gorm.DB          // 最外层的ormClient一定是nil的
+	layer          int               // 链式第几层
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
 	selectList collections.ListAny          // 筛选字段
 	omitList   collections.List[string]     // 过滤字段
@@ -222,6 +225,12 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 		receiver.ormClient.Limit(receiver.limit)
 	}
 
+	// 强制索引
+	if receiver.forceIndexName != "" {
+		receiver.ormClient.Clauses(hints.ForceIndex(receiver.forceIndexName))
+	} else if receiver.useIndexName != "" { // 推荐使用索引
+		receiver.ormClient.Clauses(hints.UseIndex(receiver.useIndexName))
+	}
 	return receiver.ormClient
 }
 
@@ -263,6 +272,16 @@ func (receiver *TableSet[Table]) Omit(columns ...string) *TableSet[Table] {
 	return session
 }
 
+// ForceIndex 强制使用索引
+func (receiver *TableSet[Table]) ForceIndex(idxName string) {
+	receiver.forceIndexName = idxName
+}
+
+// UseIndex 推荐使用索引
+func (receiver *TableSet[Table]) UseIndex(idxName string) {
+	receiver.useIndexName = idxName
+}
+
 // Where 条件
 func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
@@ -275,7 +294,7 @@ func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] 
 
 // WhereFindInSet FIND_IN_SET条件
 // FIND_IN_SET (fieldValue,fieldName)
-func (receiver *TableSet[Table]) WhereFindInSet(fieldName string,fieldValue string) *TableSet[Table] {
+func (receiver *TableSet[Table]) WhereFindInSet(fieldName string, fieldValue string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
 		query: fmt.Sprintf("FIND_IN_SET ('%s' ,%s)", fieldValue, fieldName),
@@ -284,9 +303,9 @@ func (receiver *TableSet[Table]) WhereFindInSet(fieldName string,fieldValue stri
 	return session
 }
 
-// WhereFindInSet FIND_IN_SET条件
+// WhereFindInSetOrEq FIND_IN_SET条件
 // FIND_IN_SET (fieldValue,fieldName) or orFieldName = orFieldValue
-func (receiver *TableSet[Table]) WhereFindInSetOrEq(fieldName ,fieldValue , orFieldName string, orFieldValue any) *TableSet[Table] {
+func (receiver *TableSet[Table]) WhereFindInSetOrEq(fieldName, fieldValue, orFieldName string, orFieldValue any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.whereList.Add(whereQuery{
 		query: fmt.Sprintf("(FIND_IN_SET ('%s' ,%s) OR %s = ?)", fieldValue, fieldName, orFieldName),
