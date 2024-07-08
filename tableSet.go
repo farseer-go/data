@@ -289,10 +289,19 @@ func (receiver *TableSet[Table]) UseIndex(idxName string) *TableSet[Table] {
 // Where 条件
 func (receiver *TableSet[Table]) Where(query any, args ...any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
-	session.whereList.Add(whereQuery{
-		query: query,
-		args:  args,
-	})
+	if query != nil {
+		// 过滤条件为nil
+		var notNilArgs []any
+		for _, arg := range args {
+			if arg != nil {
+				notNilArgs = append(notNilArgs, arg)
+			}
+		}
+		session.whereList.Add(whereQuery{
+			query: query,
+			args:  notNilArgs,
+		})
+	}
 	return session
 }
 
