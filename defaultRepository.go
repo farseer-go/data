@@ -32,6 +32,9 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) AddIgnore(entity TDom
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) AddList(lst collections.List[TDomainObject], batchSize int) (int64, error) {
+	if lst.Count() ==0 {
+		return 0, nil
+	}
 	var lstPO collections.List[TPoType]
 	lst.Select(&lstPO, func(entity TDomainObject) any {
 		return mapper.Single[TPoType](&entity)
