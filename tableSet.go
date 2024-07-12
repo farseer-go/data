@@ -1017,7 +1017,7 @@ func (receiver *TableSet[Table]) GetTimes(fieldName string) collections.List[tim
 }
 
 func (receiver *TableSet[Table]) TruncateTable() error {
-	sql := fmt.Sprintf("truncate TABLE %s;OPTIMIZE TABLE %s;", receiver.tableName, receiver.tableName)
+	sql := fmt.Sprintf("truncate TABLE %s;", receiver.tableName, receiver.tableName) // OPTIMIZE TABLE %s;
 	_, err := receiver.ExecuteSql(sql)
 	return err
 }
