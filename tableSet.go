@@ -576,6 +576,11 @@ func (receiver *TableSet[Table]) ToList() collections.List[Table] {
 	return collections.NewList(lst...)
 }
 
+// Fill 填充结果集
+func (receiver *TableSet[Table]) Fill(dest any, conds ...any)  {
+	receiver.getOrCreateSession().getClient().Find(dest, conds...)
+}
+
 // ToArray 返回结果集
 func (receiver *TableSet[Table]) ToArray() []Table {
 	var lst []Table
