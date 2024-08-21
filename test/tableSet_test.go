@@ -68,7 +68,11 @@ func TestTableSet(t *testing.T) {
 
 	// 测试where、whereIf
 	t.Run("where、whereIf", func(t *testing.T) {
-
+		ts := context.User.SetTableName("user")
+		ts.Where("name = ?", "steden")
+		lst := ts.ToList()
+		assert.Equal(t, 1, lst.Count())
+		assert.Equal(t, "steden", lst.First().Name)
 	})
 
 	// 测试排序

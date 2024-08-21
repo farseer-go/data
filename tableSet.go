@@ -48,7 +48,7 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	receiver.GetPrimaryName()
 	// 表名
 	if name, exists := param["name"]; exists {
-		receiver.SetTableName(name)
+		receiver.tableName = name
 	}
 
 	// 没有自定义表名时，根据po对象生成
@@ -62,7 +62,7 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 		}
 		tableName = schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", tableName)
 		//tableName = snakeString(tableName)
-		receiver.SetTableName(tableName)
+		receiver.tableName = tableName
 	}
 
 	db := receiver.getOrCreateSession().ormClient
@@ -166,8 +166,6 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			}
 		}
 
-		gormDB.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
-		gormDB.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
 		return &TableSet[Table]{
 			dbContext:    receiver.dbContext,
 			dbName:       receiver.dbName,
@@ -183,13 +181,13 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 			primaryName:  receiver.primaryName,
 		}
 	}
-
-	receiver.ormClient.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
-	receiver.ormClient.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
 	return receiver
 }
 
 func (receiver *TableSet[Table]) getClient() *gorm.DB {
+	receiver.ormClient.InstanceSet("ConnectionString", receiver.dbContext.dbConfig.ConnectionString)
+	receiver.ormClient.InstanceSet("DbName", receiver.dbContext.dbConfig.databaseName)
+
 	// 设置Select
 	if receiver.selectList.Any() {
 		lst := receiver.selectList.Distinct()
@@ -236,8 +234,9 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 
 // SetTableName 设置表名
 func (receiver *TableSet[Table]) SetTableName(tableName string) *TableSet[Table] {
-	receiver.tableName = tableName
-	return receiver
+	session := receiver.getOrCreateSession()
+	session.ormClient = session.ormClient.Table(tableName)
+	return session
 }
 
 // GetTableName 获取表名称
@@ -577,7 +576,7 @@ func (receiver *TableSet[Table]) ToList() collections.List[Table] {
 }
 
 // Fill 填充结果集
-func (receiver *TableSet[Table]) Fill(dest any, conds ...any)  {
+func (receiver *TableSet[Table]) Fill(dest any, conds ...any) {
 	receiver.getOrCreateSession().getClient().Find(dest, conds...)
 }
 
