@@ -34,7 +34,6 @@ func TestTableSet(t *testing.T) {
 			Gender:    Man,
 			IsEnable:  true,
 		})
-
 		context.User.Insert(&UserPO{
 			Name: "harlen",
 			Age:  34,

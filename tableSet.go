@@ -65,42 +65,42 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 		receiver.tableName = tableName
 	}
 
-	db := receiver.getOrCreateSession().ormClient
-	receiver.dbName = db.Migrator().CurrentDatabase()
+	ts := receiver.getOrCreateSession()
+	receiver.dbName = ts.ormClient.Migrator().CurrentDatabase()
 	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
 
 	// 自动创建表
 	if migrate, exists := param["migrate"]; exists {
 		// 创建表
-		receiver.CreateTable(db, migrate)
+		ts.CreateTable(migrate)
 		// 创建索引
-		receiver.CreateIndex(db)
+		ts.CreateIndex()
 	}
 }
 
 // CreateTable 创建表（如果不存在）
 // 相关链接：https://gorm.io/zh_CN/docs/migration.html
 // 相关链接：https://gorm.io/zh_CN/docs/indexes.html
-func (receiver *TableSet[Table]) CreateTable(db *gorm.DB, engine string) {
+func (receiver *TableSet[Table]) CreateTable(engine string) {
 	var entity Table
 	if engine != "" {
-		db = db.Set("gorm:table_options", "ENGINE="+engine)
+		receiver.ormClient = receiver.ormClient.Set("gorm:table_options", "ENGINE="+engine)
 	}
 	// 如果继承了IMigrator，则使用自定义的SQL来创建表
 	if mig, exists := any(&entity).(IMigratorCreate); exists {
-		if !db.Migrator().HasTable(receiver.tableName) {
+		if !receiver.ormClient.Migrator().HasTable(receiver.tableName) {
 			SqlScript := receiver.nameReplacer.Replace(mig.CreateTable())
-			receiver.err = db.Exec(SqlScript).Error
+			receiver.err = receiver.ormClient.Exec(SqlScript).Error
 		}
 	} else {
-		receiver.err = db.AutoMigrate(&entity)
+		receiver.err = receiver.ormClient.AutoMigrate(&entity)
 	}
 	if receiver.err != nil {
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
 }
 
-func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
+func (receiver *TableSet[Table]) CreateIndex() {
 	var entity Table
 
 	// 创建索引
@@ -114,14 +114,14 @@ func (receiver *TableSet[Table]) CreateIndex(db *gorm.DB) {
 		idx := mig.CreateIndex()
 		for idxName, idxFields := range idx {
 			// 索引已存在时，不创建
-			if db.Migrator().HasIndex(receiver.tableName, idxName) {
+			if receiver.ormClient.Migrator().HasIndex(receiver.tableName, idxName) {
 				continue
 			}
 
 			// 得到创建索引的SQL脚本
 			sqlScript := dataDriver.CreateIndex(receiver.tableName, idxName, idxFields)
 			// 执行
-			if receiver.err = db.Exec(sqlScript).Error; receiver.err != nil {
+			if receiver.err = receiver.ormClient.Exec(sqlScript).Error; receiver.err != nil {
 				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
 			}
 		}
@@ -235,6 +235,7 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 // SetTableName 设置表名
 func (receiver *TableSet[Table]) SetTableName(tableName string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
+	session.tableName = tableName
 	session.ormClient = session.ormClient.Table(tableName)
 	return session
 }
