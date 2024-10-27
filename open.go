@@ -1,16 +1,18 @@
 package data
 
 import (
-	"github.com/farseer-go/fs/container"
-	"github.com/farseer-go/fs/flog"
-	"github.com/farseer-go/fs/trace"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/farseer-go/fs/container"
+	"github.com/farseer-go/fs/flog"
+	"github.com/farseer-go/fs/trace"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var databaseConn map[string]*gorm.DB
@@ -25,7 +27,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		defer lock.Unlock()
 		traceManager := container.Resolve[trace.IManager]()
 		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.databaseName, dbConfig.ConnectionString)
-
+		fmt.Printf("db=%s,conn=%s\n", dbConfig.databaseName, dbConfig.ConnectionString)
 		// 连接数据库参考：https://gorm.io/zh_CN/docs/connecting_to_the_database.html
 		// Data Source ClientName 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name
 
