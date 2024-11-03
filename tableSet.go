@@ -2,6 +2,10 @@ package data
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
@@ -10,9 +14,6 @@ import (
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 	"gorm.io/hints"
-	"reflect"
-	"strings"
-	"time"
 )
 
 // TableSet 数据库表操作
@@ -250,9 +251,8 @@ func (receiver *TableSet[Table]) GetTableName() string {
 // Select 筛选字段
 func (receiver *TableSet[Table]) Select(query any, args ...any) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
-	switch query.(type) {
+	switch selects := query.(type) {
 	case []string:
-		selects := query.([]string)
 		for _, s := range selects {
 			session.selectList.Add(s)
 		}
@@ -1024,7 +1024,7 @@ func (receiver *TableSet[Table]) GetTimes(fieldName string) collections.List[tim
 }
 
 func (receiver *TableSet[Table]) TruncateTable() error {
-	sql := fmt.Sprintf("truncate TABLE %s;", receiver.tableName, receiver.tableName) // OPTIMIZE TABLE %s;
+	sql := fmt.Sprintf("truncate TABLE %s;", receiver.tableName) // OPTIMIZE TABLE %s;
 	_, err := receiver.ExecuteSql(sql)
 	return err
 }
