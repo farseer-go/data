@@ -236,7 +236,7 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 
 	// 使用final
 	if receiver.useFinal {
-		receiver.ormClient.Clauses(hints.IndexHint{Type: "final "})
+		receiver.ormClient.Clauses(FinalHint{})
 	}
 	return receiver.ormClient
 }
@@ -1122,4 +1122,28 @@ func snakeString(s string) string {
 	}
 	// 统一转小写
 	return strings.ToLower(string(data[:]))
+}
+
+type FinalHint struct {
+}
+
+func (indexHint FinalHint) Build(builder clause.Builder) {
+	builder.WriteString(" FINAL ")
+}
+func (indexHint FinalHint) ModifyStatement(stmt *gorm.Statement) {
+	for _, name := range []string{"FROM"} {
+		clause := stmt.Clauses[name]
+
+		if clause.AfterExpression == nil {
+			clause.AfterExpression = indexHint
+		} else {
+			clause.AfterExpression = hints.Exprs{clause.AfterExpression, indexHint}
+		}
+
+		if name == "FROM" {
+			clause.Builder = hints.IndexHintFromClauseBuilder
+		}
+
+		stmt.Clauses[name] = clause
+	}
 }
