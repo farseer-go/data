@@ -236,7 +236,7 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 
 	// 使用final
 	if receiver.useFinal {
-		receiver.ormClient.Clauses(hints.IndexHint{Type: "USE INDEX ", Keys: []string{"final"}})
+		receiver.ormClient.Clauses(hints.IndexHint{Type: "final "})
 	}
 	return receiver.ormClient
 }
