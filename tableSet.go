@@ -23,6 +23,7 @@ type TableSet[Table any] struct {
 	tableName      string            // 表名
 	forceIndexName string            // 强制索引名称
 	useIndexName   string            // 推荐使用索引名称
+	useFinal       bool              // clickhouse使用final关键字
 	primaryName    []string          // 主键字段名称
 	nameReplacer   *strings.Replacer // 替换dbName、tableName
 	ormClient      *gorm.DB          // 最外层的ormClient一定是nil的
@@ -232,6 +233,11 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 	} else if receiver.useIndexName != "" { // 推荐使用索引
 		receiver.ormClient.Clauses(hints.UseIndex(receiver.useIndexName))
 	}
+
+	// 使用final
+	if receiver.useFinal {
+		receiver.ormClient.Clauses(clause.From{Tables: []clause.Table{{Name: receiver.tableName + " final"}}})
+	}
 	return receiver.ormClient
 }
 
@@ -285,6 +291,13 @@ func (receiver *TableSet[Table]) ForceIndex(idxName string) *TableSet[Table] {
 func (receiver *TableSet[Table]) UseIndex(idxName string) *TableSet[Table] {
 	session := receiver.getOrCreateSession()
 	session.useIndexName = idxName
+	return session
+}
+
+// Final Clickhouse查询时，增加Final关键字
+func (receiver *TableSet[Table]) Final() *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.useFinal = true
 	return session
 }
 
