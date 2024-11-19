@@ -3,16 +3,11 @@ module github.com/farseer-go/data/driver/clickhouse
 go 1.22
 
 require (
-	github.com/farseer-go/data v0.14.0
+	github.com/farseer-go/data v0.15.0
 	github.com/farseer-go/fs v0.15.0
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/gorm v1.25.12
 )
-
-// 原库404
-exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
-
-//replace github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f => github.com/farseer-go/osext v0.1.0
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -42,3 +37,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
 )
+
+// 原库404
+exclude github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f
