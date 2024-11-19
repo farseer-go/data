@@ -36,6 +36,7 @@ require (
 	golang.org/x/text v0.20.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
+	gorm.io/hints v1.1.2 // indirect
 )
 
 // 原库404
