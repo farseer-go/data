@@ -2,14 +2,16 @@ package data
 
 import (
 	"database/sql"
+	"strings"
+
 	"github.com/farseer-go/fs/asyncLocal"
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
+	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
-	"strings"
 )
 
 // 实现同一个协程下的事务作用域
@@ -197,6 +199,9 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 	sql = receiver.nameReplacer.Replace(sql)
 	result := receiver.Original().Raw(sql, values...)
 	result.Find(arrayOrEntity)
+	if result.Error != nil {
+		flog.Errorf("执行ExecuteSqlToResult时出现异常,sql=%s,err=", sql, result.Error.Error())
+	}
 	return result.RowsAffected, result.Error
 }
 
