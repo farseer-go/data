@@ -1,10 +1,11 @@
 package data
 
 import (
-	"encoding/json"
 	"go/ast"
-	"gorm.io/gorm/schema"
 	"reflect"
+
+	"github.com/bytedance/sonic"
+	"gorm.io/gorm/schema"
 )
 
 // ToMap PO实体转map
@@ -38,7 +39,7 @@ func ToMap(entity any) map[string]any {
 
 			itemValue := fsVal.Field(i)
 			if isJsonField {
-				marshal, _ := json.Marshal(itemValue.Interface())
+				marshal, _ := sonic.Marshal(itemValue.Interface())
 				itemValue = reflect.ValueOf(marshal)
 			}
 			dicValue.SetMapIndex(reflect.ValueOf(fieldName), itemValue)

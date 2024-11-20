@@ -2,13 +2,14 @@ package test
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"testing"
+
+	"github.com/bytedance/sonic"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type TestMysqlContext struct {
@@ -43,7 +44,7 @@ type FullNameVO struct {
 
 // Value return json value, implement driver.Valuer interface
 func (receiver FullNameVO) Value() (driver.Value, error) {
-	ba, err := json.Marshal(receiver)
+	ba, err := sonic.Marshal(receiver)
 	return string(ba), err
 }
 
@@ -64,7 +65,7 @@ func (receiver *FullNameVO) Scan(val any) error {
 	}
 
 	t := FullNameVO{}
-	err := json.Unmarshal(ba, &t)
+	err := sonic.Unmarshal(ba, &t)
 	*receiver = t
 	return err
 }
