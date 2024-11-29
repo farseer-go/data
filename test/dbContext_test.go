@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bytedance/sonic"
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
+	"github.com/farseer-go/fs/snc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +44,7 @@ type FullNameVO struct {
 
 // Value return json value, implement driver.Valuer interface
 func (receiver FullNameVO) Value() (driver.Value, error) {
-	ba, err := sonic.Marshal(receiver)
+	ba, err := snc.Marshal(receiver)
 	return string(ba), err
 }
 
@@ -65,7 +65,7 @@ func (receiver *FullNameVO) Scan(val any) error {
 	}
 
 	t := FullNameVO{}
-	err := sonic.Unmarshal(ba, &t)
+	err := snc.Unmarshal(ba, &t)
 	*receiver = t
 	return err
 }

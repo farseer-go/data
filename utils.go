@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"reflect"
 
-	"github.com/bytedance/sonic"
+	"github.com/farseer-go/fs/snc"
 	"gorm.io/gorm/schema"
 )
 
@@ -39,7 +39,7 @@ func ToMap(entity any) map[string]any {
 
 			itemValue := fsVal.Field(i)
 			if isJsonField {
-				marshal, _ := sonic.Marshal(itemValue.Interface())
+				marshal, _ := snc.Marshal(itemValue.Interface())
 				itemValue = reflect.ValueOf(marshal)
 			}
 			dicValue.SetMapIndex(reflect.ValueOf(fieldName), itemValue)
