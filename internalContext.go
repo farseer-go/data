@@ -36,8 +36,8 @@ type IGetInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
-	dbName         string             // 库名
-	nameReplacer   *strings.Replacer  // 替换dbName、tableName
+	//dbName         string             // 库名
+	nameReplacer *strings.Replacer // 替换dbName、tableName
 }
 
 // RegisterInternalContext 注册内部上下文
@@ -56,6 +56,7 @@ func RegisterInternalContext(key string, configString string) {
 	}
 	config.DataType = strings.ToLower(config.DataType)
 	config.keyName = key
+	config.migrated = strings.Contains(configString, "Migrate=")
 
 	// 获取数据库名称
 	switch config.DataType {
@@ -96,7 +97,7 @@ func RegisterInternalContext(key string, configString string) {
 
 	// 注册上下文
 	ins := &internalContext{dbConfig: &config}
-	ins.dbName = config.databaseName
+	//ins.dbName = config.databaseName
 	ins.nameReplacer = strings.NewReplacer("{database}", config.databaseName)
 	container.RegisterInstance[core.ITransaction](ins, key)
 

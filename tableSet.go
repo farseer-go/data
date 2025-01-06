@@ -59,9 +59,7 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 		//_ = db.Statement.Parse(t) // db.Statement.Model
 		//tableName := db.Statement.Schema.Table
 		tableName := reflect.TypeOf(t).Name()
-		if strings.HasSuffix(tableName, "PO") {
-			tableName = tableName[:len(tableName)-2]
-		}
+		tableName = strings.TrimSuffix(tableName, "PO")
 		tableName = schema.NamingStrategy{IdentifierMaxLength: 64}.ColumnName("", tableName)
 		//tableName = snakeString(tableName)
 		receiver.tableName = tableName
@@ -73,8 +71,12 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	ts.dbName = receiver.dbName
 	ts.nameReplacer = receiver.nameReplacer
 
-	// 自动创建表
-	if migrate, exists := param["migrate"]; exists {
+	migrate, exists := param["migrate"]
+	if !exists {
+		exists = receiver.dbContext.dbConfig.migrated
+		migrate = receiver.dbContext.dbConfig.Migrate
+	}
+	if exists {
 		// 创建表
 		ts.CreateTable(migrate)
 		// 创建索引
