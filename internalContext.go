@@ -38,8 +38,7 @@ type IGetInternalContext interface {
 type internalContext struct {
 	dbConfig       *dbConfig          // 数据库配置
 	IsolationLevel sql.IsolationLevel // 事务等级
-	//dbName         string             // 库名
-	nameReplacer *strings.Replacer // 替换dbName、tableName
+	nameReplacer   *strings.Replacer  // 替换dbName、tableName
 }
 
 // RegisterInternalContext 注册内部上下文
@@ -49,15 +48,27 @@ type internalContext struct {
 // DataType=postgresql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=host=127.0.0.1 user=user password=123456 dbname=dbname port=9920 sslmode=disable TimeZone=Asia/Shanghai
 // DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=gorm.db
 func RegisterInternalContext(key string, configString string) {
-	config := configure.ParseString[dbConfig](configString)
-	if config.ConnectionString == "" {
+	ins := NewInternalContext(configString)
+	if ins.dbConfig.ConnectionString == "" {
 		panic("[farseer.yaml]Database." + key + ".ConnectionString，配置不正确" + configString)
 	}
-	if config.DataType == "" {
+	if ins.dbConfig.DataType == "" {
 		panic("[farseer.yaml]Database." + key + ".DataType，配置不正确：" + configString)
 	}
+	ins.dbConfig.keyName = key
+
+	// 初始化共享事务
+	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()
+
+	container.RegisterInstance[core.ITransaction](ins, key)
+	// 注册健康检查
+	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
+}
+
+// 通过连接字符串解析数据库配置，得到internalContext
+func NewInternalContext(configString string) *internalContext {
+	config := configure.ParseString[dbConfig](configString)
 	config.DataType = strings.ToLower(config.DataType)
-	config.keyName = key
 	config.migrated = strings.Contains(configString, "Migrate=")
 
 	// 获取数据库名称
@@ -94,17 +105,12 @@ func RegisterInternalContext(key string, configString string) {
 		config.databaseName = strings.Split(config.databaseName, "?")[0]
 	}
 
-	// 初始化共享事务
-	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()
-
 	// 注册上下文
 	ins := &internalContext{dbConfig: &config}
 	//ins.dbName = config.databaseName
 	ins.nameReplacer = strings.NewReplacer("{database}", config.databaseName)
-	container.RegisterInstance[core.ITransaction](ins, key)
 
-	// 注册健康检查
-	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
+	return ins
 }
 
 // Begin 开启事务

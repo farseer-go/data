@@ -31,5 +31,4 @@ func (module Module) Initialize() {
 		// 注册内部上下文
 		RegisterInternalContext(key, configString)
 	}
-
 }
