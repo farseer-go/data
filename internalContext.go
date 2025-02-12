@@ -26,6 +26,8 @@ type IInternalContext interface {
 	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error)
 	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
+	// GetDatabaseList 获取数据库列表
+	GetDatabaseList() []string
 }
 
 type IGetInternalContext interface {
@@ -201,7 +203,7 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 	result := receiver.Original().Raw(sql, values...)
 	result.Find(arrayOrEntity)
 	if result.Error != nil {
-		flog.Errorf("执行ExecuteSqlToResult时出现异常,sql=%s,err=", sql, result.Error.Error())
+		flog.Errorf("执行ExecuteSqlToResult时出现异常,sql=%s,err=%s", sql, result.Error.Error())
 	}
 	return result.RowsAffected, result.Error
 }
@@ -215,4 +217,26 @@ func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values
 
 func (receiver *internalContext) GetInternalContext() IInternalContext {
 	return receiver
+}
+
+func (receiver *internalContext) GetDatabaseList() []string {
+	var arrayOrEntity []string
+	var sql string
+	switch receiver.dbConfig.DataType {
+	case "mysql":
+		sql = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys');"
+	case "sqlserver":
+		sql = "SELECT name FROM sys.databases;"
+	case "sqlite":
+	case "postgresql", "postgres":
+		sql = "SELECT datname FROM pg_database;"
+	case "clickhouse":
+		sql = "SELECT name FROM system.databases WHERE name NOT IN ('INFORMATION_SCHEMA', 'default', 'information_schema', 'system');"
+	}
+	result := receiver.Original().Raw(sql)
+	result.Find(&arrayOrEntity)
+	if result.Error != nil {
+		flog.Errorf("执行GetDatabaseList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
+	}
+	return arrayOrEntity
 }
