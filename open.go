@@ -58,7 +58,10 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		}
 
 		setPool(gormDB, dbConfig)
-		databaseConn[dbConfig.keyName] = gormDB
+		// 如果是动态连接，dbConfig.keyName是空的
+		if dbConfig.keyName != "" {
+			databaseConn[dbConfig.keyName] = gormDB
+		}
 		db = gormDB
 	}
 	return db, nil

@@ -181,7 +181,12 @@ func (receiver *internalContext) Rollback() {
 
 // Original 返回原生的对象
 func (receiver *internalContext) Original() *gorm.DB {
-	gormDB := routineOrmClient[receiver.dbConfig.keyName].Get()
+	var gormDB *gorm.DB
+	// 如果是动态连接，则routineOrmClient获取不到对象，因为receiver.dbConfig.keyName是空的
+	if asyncLocalGormDB, exists := routineOrmClient[receiver.dbConfig.keyName]; exists {
+		gormDB = asyncLocalGormDB.Get()
+	}
+
 	var err error
 
 	// 上下文没有开启事务
