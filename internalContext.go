@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/farseer-go/fs/asyncLocal"
@@ -27,7 +28,7 @@ type IInternalContext interface {
 	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
 	// GetDatabaseList 获取数据库列表
-	GetDatabaseList() []string
+	GetDatabaseList() ([]string, error)
 }
 
 type IGetInternalContext interface {
@@ -230,7 +231,7 @@ func (receiver *internalContext) GetInternalContext() IInternalContext {
 	return receiver
 }
 
-func (receiver *internalContext) GetDatabaseList() []string {
+func (receiver *internalContext) GetDatabaseList() ([]string, error) {
 	var arrayOrEntity []string
 	var sql string
 	switch receiver.dbConfig.DataType {
@@ -244,10 +245,15 @@ func (receiver *internalContext) GetDatabaseList() []string {
 	case "clickhouse":
 		sql = "SELECT name FROM system.databases WHERE name NOT IN ('INFORMATION_SCHEMA', 'default', 'information_schema', 'system');"
 	}
-	result := receiver.Original().Raw(sql)
+	original := receiver.Original()
+	if original == nil {
+		return arrayOrEntity, fmt.Errorf("数据库连接失败")
+	}
+
+	result := original.Raw(sql)
 	result.Find(&arrayOrEntity)
 	if result.Error != nil {
-		flog.Errorf("执行GetDatabaseList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
+		return arrayOrEntity, fmt.Errorf("执行GetDatabaseList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
 	}
-	return arrayOrEntity
+	return arrayOrEntity, nil
 }
