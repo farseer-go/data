@@ -30,6 +30,8 @@ type IInternalContext interface {
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
 	// GetDatabaseList 获取数据库列表
 	GetDatabaseList() ([]string, error)
+	// GetTableList 获取所有表
+	GetTableList(database string) ([]string, error)
 }
 
 type IGetInternalContext interface {
@@ -259,6 +261,34 @@ func (receiver *internalContext) GetDatabaseList() ([]string, error) {
 	result.Find(&arrayOrEntity)
 	if result.Error != nil {
 		return arrayOrEntity, fmt.Errorf("执行GetDatabaseList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
+	}
+	return arrayOrEntity, nil
+}
+
+func (receiver *internalContext) GetTableList(database string) ([]string, error) {
+	var arrayOrEntity []string
+	var sql string
+	switch receiver.dbConfig.DataType {
+	case "mysql":
+		sql = fmt.Sprintf("SHOW TABLES FROM %s;", database)
+	case "sqlserver":
+		sql = fmt.Sprintf("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = '%s';", database)
+	case "sqlite":
+		sql = "SELECT name FROM sqlite_master WHERE type = 'table';"
+	case "postgresql", "postgres":
+		sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+	case "clickhouse":
+		sql = fmt.Sprintf("SELECT name FROM system.tables WHERE database = '%s' and engine <> 'View'", database)
+	}
+	original := receiver.Original()
+	if original == nil {
+		return arrayOrEntity, fmt.Errorf("数据库连接失败")
+	}
+
+	result := original.Raw(sql)
+	result.Find(&arrayOrEntity)
+	if result.Error != nil {
+		return arrayOrEntity, fmt.Errorf("执行GetTableList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
 	}
 	return arrayOrEntity, nil
 }
