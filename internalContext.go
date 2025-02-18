@@ -64,7 +64,16 @@ func RegisterInternalContext(key string, configString string) {
 	// 初始化共享事务
 	routineOrmClient[key] = asyncLocal.New[*gorm.DB]()
 
+	// 如果之前注册过，则先移除
+	if container.IsRegister[core.ITransaction](key) {
+		container.Remove[core.ITransaction](key)
+	}
 	container.RegisterInstance[core.ITransaction](ins, key)
+
+	// 如果之前注册过，则先移除
+	if container.IsRegister[core.IHealthCheck]("db_" + key) {
+		container.Remove[core.IHealthCheck]("db_" + key)
+	}
 	// 注册健康检查
 	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
 }

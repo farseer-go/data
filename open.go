@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/farseer-go/fs/container"
-	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -51,12 +50,12 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 			),
 		})
 		defer traceDatabase.End(err)
-		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})
 		if err != nil {
-			_ = flog.Error(err)
+			//_ = flog.Error(err)
 			return gormDB, err
 		}
 
+		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})
 		setPool(gormDB, dbConfig)
 		// 如果是动态连接，dbConfig.keyName是空的
 		if dbConfig.keyName != "" {

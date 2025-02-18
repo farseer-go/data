@@ -66,6 +66,9 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	}
 
 	ts := receiver.getOrCreateSession()
+	if ts.err != nil {
+		panic(ts.err.Error())
+	}
 	receiver.dbName = ts.ormClient.Migrator().CurrentDatabase()
 	receiver.nameReplacer = strings.NewReplacer("{database}", receiver.dbName, "{table}", receiver.tableName)
 	ts.dbName = receiver.dbName

@@ -1,12 +1,13 @@
 package data
 
 import (
+	"reflect"
+	"strings"
+
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/types"
-	"reflect"
-	"strings"
 )
 
 // 继承多租户时，默认仓库可以找到正确的上下文
@@ -72,7 +73,7 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 					}
 				}
 				if isDataDomainSet {
-					// 再取tableSet的子属性，并设置值
+					// 再取DomainSet的子属性，并设置值
 					field.Addr().MethodByName("Init").Call([]reflect.Value{internalContextType, reflect.ValueOf(param), getInternalContextVal})
 				} else if isDataTableSet {
 					// 再取tableSet的子属性，并设置值
