@@ -42,13 +42,13 @@ func (op *TracePlugin) traceBefore(db *gorm.DB) {
 // 链路追踪记录
 func (op *TracePlugin) traceAfter(db *gorm.DB) {
 	if result, exists := db.InstanceGet("trace"); exists {
-		if detail, isOk := result.(trace.TraceDetail); isOk {
+		if detail, isOk := result.(*trace.TraceDetail); isOk {
 			if db.DryRun {
 				detail.Ignore()
 			} else {
 				connectionString, _ := db.InstanceGet("ConnectionString")
 				dbName, _ := db.InstanceGet("DbName")
-				detail.SetSql(parse.ToString(connectionString), parse.ToString(dbName), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...), db.Statement.RowsAffected)
+				detail.TraceDetailDatabase.SetSql(parse.ToString(connectionString), parse.ToString(dbName), db.Statement.Table, db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...), db.Statement.RowsAffected)
 			}
 			detail.End(db.Error)
 		}
