@@ -42,7 +42,7 @@ func (op *TracePlugin) traceBefore(db *gorm.DB) {
 // 链路追踪记录
 func (op *TracePlugin) traceAfter(db *gorm.DB) {
 	if result, exists := db.InstanceGet("trace"); exists {
-		if detail, isOk := result.(trace.ITraceDetail); isOk {
+		if detail, isOk := result.(trace.TraceDetail); isOk {
 			if db.DryRun {
 				detail.Ignore()
 			} else {
