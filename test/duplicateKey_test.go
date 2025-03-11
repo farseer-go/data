@@ -1,9 +1,10 @@
 package test
 
 import (
+	"testing"
+
 	"github.com/farseer-go/data"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type TestDuplicateContext struct {
@@ -32,13 +33,13 @@ func TestDuplicateKey(t *testing.T) {
 		assert.Error(t, err, "insert error")
 	}
 
-	if err := context.Account.InsertIgnore(&AccountPO{Name: "aaa", Age: 2}); err != nil {
+	if _, err := context.Account.InsertIgnore(&AccountPO{Name: "aaa", Age: 2}); err != nil {
 		// number=1062
 		// Duplicate entry 'aaa' for key 'account.PRIMARY'
 		assert.Error(t, err, "insert error")
 	}
 
-	if err := context.Account.InsertIgnore(&AccountPO{Name: "bbb", Age: 8}); err != nil {
+	if _, err := context.Account.InsertIgnore(&AccountPO{Name: "bbb", Age: 8}); err != nil {
 		// number=1062
 		// Duplicate entry '8' for key 'account.idx_age'
 		assert.Error(t, err, "insert error")

@@ -28,11 +28,12 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Add(entity TDomainObj
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) AddIgnore(entity TDomainObject) error {
 	po := mapper.Single[TPoType](&entity)
-	return receiver.table.setDbContext(receiver.getInternalContext).InsertIgnore(&po)
+	_, err := receiver.table.setDbContext(receiver.getInternalContext).InsertIgnore(&po)
+	return err
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) AddList(lst collections.List[TDomainObject], batchSize int) (int64, error) {
-	if lst.Count() ==0 {
+	if lst.Count() == 0 {
 		return 0, nil
 	}
 	var lstPO collections.List[TPoType]

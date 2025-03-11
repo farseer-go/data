@@ -648,9 +648,9 @@ func (receiver *TableSet[Table]) Insert(po *Table) error {
 }
 
 // InsertIgnore 新增记录（忽略主键、唯一键存在的记录）
-func (receiver *TableSet[Table]) InsertIgnore(po *Table) error {
+func (receiver *TableSet[Table]) InsertIgnore(po *Table) (int64, error) {
 	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).Create(po)
-	return result.Error
+	return result.RowsAffected, result.Error
 }
 
 //// InsertIgnoreDuplicateKey 新增记录，忽略重复主键、唯一键约束错误
