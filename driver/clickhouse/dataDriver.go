@@ -3,6 +3,7 @@ package data_clickhouse
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/farseer-go/data"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
@@ -12,7 +13,7 @@ type dataDriver struct {
 }
 
 func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
-	// clickhouse://user:123456@127.0.0.1:9942/dbname?dial_timeout=10s&read_timeout=20s
+	// clickhouse://user:123456@127.0.0.1:9942/dbname?dial_timeout=10s&read_timeout=60s
 	//return clickhouse.Open(receiver.ConnectionString)
 	return clickhouse.New(clickhouse.Config{
 		DSN:                          connectionString,

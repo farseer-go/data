@@ -48,7 +48,7 @@ type internalContext struct {
 // RegisterInternalContext 注册内部上下文
 // DataType=mysql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
 // DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
-// DataType=clickhouse,PoolMaxSize=50,PoolMinSize=1,ConnectionString=clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=20s
+// DataType=clickhouse,PoolMaxSize=50,PoolMinSize=1,ConnectionString=clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=60s
 // DataType=postgresql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=host=127.0.0.1 user=user password=123456 dbname=dbname port=9920 sslmode=disable TimeZone=Asia/Shanghai
 // DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=gorm.db
 func RegisterInternalContext(key string, configString string) {
@@ -116,7 +116,7 @@ func NewInternalContext(configString string) *internalContext {
 		config.databaseName = dbNames[len(dbNames)-1]          // dbname?charset=utf8mb4&parseTime=True&loc=Local
 		config.databaseName = strings.Split(config.databaseName, "?")[0]
 	case "clickhouse":
-		// clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=20s
+		// clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=60s
 		if parsedURL, err := url.Parse(config.ConnectionString); err == nil {
 			config.databaseName = strings.TrimPrefix(parsedURL.Path, "/")
 		}
