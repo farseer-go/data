@@ -93,6 +93,11 @@ func (d Decimal) Truncate() Decimal {
 	return Decimal{source: d.source.Floor(0)}
 }
 
+// Abs 取绝对值
+func (d Decimal) Abs() Decimal {
+	return Decimal{source: d.source.Abs()}
+}
+
 // Ceil 返回大于或等于 d 的最近整数值。
 func (d Decimal) Ceil() Decimal {
 	return Decimal{source: d.source.Ceil(0)}
