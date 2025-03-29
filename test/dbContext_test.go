@@ -8,8 +8,8 @@ import (
 
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
+	"github.com/farseer-go/data/decimal"
 	"github.com/farseer-go/fs/snc"
-	"github.com/govalues/decimal"
 	"github.com/stretchr/testify/assert"
 )
 

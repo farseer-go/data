@@ -5,10 +5,10 @@ import (
 
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
+	"github.com/farseer-go/data/decimal"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
-	"github.com/govalues/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +35,7 @@ func TestTableSet(t *testing.T) {
 			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
 			Gender:    Man,
 			IsEnable:  true,
-			Weight:    decimal.MustParse("60.268"),
+			Weight:    decimal.NewFromString("60.268"),
 		})
 		context.User.Insert(&UserPO{
 			Name: "harlen",
@@ -48,7 +48,7 @@ func TestTableSet(t *testing.T) {
 			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "10"}),
 			Gender:    Woman,
 			IsEnable:  false,
-			Weight:    decimal.MustParse("65.328"),
+			Weight:    decimal.NewFromString("65.328"),
 		})
 
 		// 此时的数据量应该为2
@@ -196,7 +196,7 @@ func TestTableSet(t *testing.T) {
 	})
 
 	t.Run("GetDecimal", func(t *testing.T) {
-		assert.True(t, context.User.Where("Name = ?", "steden").GetDecimal("Weight").Equal(decimal.MustParse("60.268")))
+		assert.True(t, context.User.Where("Name = ?", "steden").GetDecimal("Weight").Equal(decimal.NewFromString("60.268")))
 
 		lst := context.User.Asc("Name").GetDecimals("Weight")
 		assert.Equal(t, 2, lst.Count())

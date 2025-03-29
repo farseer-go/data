@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/farseer-go/collections"
+	"github.com/farseer-go/data/decimal"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
-	"github.com/govalues/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
