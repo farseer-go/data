@@ -21,7 +21,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/microsoft/go-mssqldb v1.7.2 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/timandy/routine v1.1.4 // indirect
 	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/text v0.20.0 // indirect

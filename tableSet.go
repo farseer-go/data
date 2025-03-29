@@ -9,7 +9,7 @@ import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
-	"github.com/shopspring/decimal"
+	"github.com/govalues/decimal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -978,7 +978,7 @@ func (receiver *TableSet[Table]) GetDecimal(fieldName string) decimal.Decimal {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
 	rows, _ := result.Rows()
 	if rows == nil {
-		return decimal.NewFromInt(0)
+		return decimal.Zero
 	}
 	defer func() {
 		_ = rows.Close()
@@ -1099,7 +1099,6 @@ func (receiver *TableSet[Table]) GetPrimaryName() {
 			receiver.primaryName = append(receiver.primaryName, fieldName)
 		}
 	}
-	return
 }
 
 // Clickhouse 返回Clickhouse的对象

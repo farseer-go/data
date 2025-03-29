@@ -8,8 +8,8 @@ require (
 	github.com/farseer-go/collections v0.15.0
 	github.com/farseer-go/fs v0.15.0
 	github.com/farseer-go/mapper v0.15.0
-	github.com/shopspring/decimal v1.4.0
-	github.com/stretchr/testify v1.9.0
+	github.com/govalues/decimal v0.1.36
+	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
 	gorm.io/hints v1.1.2

@@ -9,6 +9,7 @@ import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data"
 	"github.com/farseer-go/fs/snc"
+	"github.com/govalues/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,21 +18,15 @@ type TestMysqlContext struct {
 }
 
 type UserPO struct {
-	Id int `gorm:"primaryKey"`
-	// 用户名称
-	Name string
-	// 用户年龄
-	Age int
-	// 用户全称
-	Fullname FullNameVO
-	// 特长
-	Specialty collections.List[string]
-	// 自定义属性
-	Attribute collections.Dictionary[string, string]
-	// 性别
-	Gender GenderType
-	// 是否启用
-	IsEnable bool
+	Id        int                                    `gorm:"primaryKey"`
+	Name      string                                 // 用户名称
+	Age       int                                    // 用户年龄
+	Fullname  FullNameVO                             // 用户全称
+	Specialty collections.List[string]               // 特长
+	Attribute collections.Dictionary[string, string] // 自定义属性
+	Gender    GenderType                             // 性别
+	IsEnable  bool                                   // 是否启用
+	Weight    decimal.Decimal                        // 体重
 }
 
 // 全称
