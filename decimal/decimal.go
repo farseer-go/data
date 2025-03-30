@@ -12,7 +12,8 @@ var Zero = Decimal{source: govalues.Zero}
 var Float001 = Decimal{source: govalues.MustParse("0.01")}
 
 func NewFromString(s string) Decimal {
-	return Decimal{source: govalues.MustParse(s)}
+	d, _ := govalues.Parse(s)
+	return Decimal{source: d}
 }
 func NewFromFloat64(e float64) Decimal {
 	d, _ := govalues.NewFromFloat64(e)
@@ -42,7 +43,7 @@ func (d Decimal) Add(e Decimal) Decimal {
 }
 
 func (d Decimal) AddString(s string) Decimal {
-	e := govalues.MustParse(s)
+	e, _ := govalues.Parse(s)
 	r, _ := d.source.Add(e)
 	return Decimal{source: r}
 }
