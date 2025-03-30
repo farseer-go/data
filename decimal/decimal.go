@@ -176,7 +176,7 @@ func (d Decimal) IsNeg() bool {
 //****************** 以下是数据库、json等接口需要******************
 
 func (d *Decimal) Scan(value any) error                    { return d.source.Scan(value) }
-func (d Decimal) Value() (driver.Value, error)             { return d.source.Value() }
+func (d Decimal) Value() (driver.Value, error)             { v := d.String(); return v, nil }
 func (d *Decimal) UnmarshalJSON(data []byte) error         { return d.source.UnmarshalJSON(data) }
 func (d Decimal) MarshalJSON() ([]byte, error)             { return d.source.MarshalJSON() }
 func (d *Decimal) UnmarshalText(text []byte) error         { return d.source.UnmarshalText(text) }
