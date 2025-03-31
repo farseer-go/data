@@ -105,7 +105,9 @@ func (d Decimal) Ceil() Decimal {
 }
 
 func (d Decimal) String() string {
-	return d.source.String()
+	//data := d.removeSufferZero()
+	//return *(*string)(unsafe.Pointer(&data))
+	return string(d.removeSufferZero())
 }
 
 // StringFixed 四舍五入
@@ -175,19 +177,56 @@ func (d Decimal) IsNeg() bool {
 
 //****************** 以下是数据库、json等接口需要******************
 
-func (d *Decimal) Scan(value any) error                    { return d.source.Scan(value) }
-func (d Decimal) Value() (driver.Value, error)             { v := d.String(); return v, nil }
-func (d *Decimal) UnmarshalJSON(data []byte) error         { return d.source.UnmarshalJSON(data) }
-func (d Decimal) MarshalJSON() ([]byte, error)             { return d.source.MarshalJSON() }
-func (d *Decimal) UnmarshalText(text []byte) error         { return d.source.UnmarshalText(text) }
-func (d Decimal) AppendText(text []byte) ([]byte, error)   { return d.source.AppendText(text) }
-func (d Decimal) MarshalText() ([]byte, error)             { return d.source.MarshalText() }
+func (d *Decimal) Scan(value any) error            { return d.source.Scan(value) }
+func (d Decimal) Value() (driver.Value, error)     { return d.String(), nil }
+func (d *Decimal) UnmarshalJSON(data []byte) error { return d.source.UnmarshalJSON(data) }
+func (d Decimal) MarshalJSON() ([]byte, error) {
+	text := make([]byte, 0, 26)
+	text = append(text, '"')
+	text = append(text, d.removeSufferZero()...)
+	text = append(text, '"')
+	return text, nil
+}
+func (d *Decimal) UnmarshalText(text []byte) error       { return d.source.UnmarshalText(text) }
+func (d Decimal) AppendText(text []byte) ([]byte, error) { return d.source.AppendText(text) }
+func (d Decimal) MarshalText() ([]byte, error) {
+	data := d.removeSufferZero()
+	return data, nil
+}
 func (d *Decimal) UnmarshalBinary(data []byte) error       { return d.source.UnmarshalBinary(data) }
 func (d Decimal) AppendBinary(data []byte) ([]byte, error) { return d.source.AppendBinary(data) }
-func (d Decimal) MarshalBinary() ([]byte, error)           { return d.source.MarshalBinary() }
+func (d Decimal) MarshalBinary() ([]byte, error) {
+	data := d.removeSufferZero()
+	return data, nil
+}
 func (d *Decimal) UnmarshalBSONValue(typ byte, data []byte) error {
 	return d.source.UnmarshalBSONValue(typ, data)
 }
 func (d Decimal) MarshalBSONValue() (typ byte, data []byte, err error) {
 	return d.source.MarshalBSONValue()
+}
+
+// 移除小数点末尾的0
+func (d Decimal) removeSufferZero() []byte {
+	data, _ := d.source.MarshalText()
+	// 先确定是否包含小数点
+	isHavePoint := false
+	for _, d := range data {
+		if d == 46 { // 小数点=46
+			isHavePoint = true
+			break
+		}
+	}
+	// 不包含小数点时，不需要处理，如果末尾是0和小数点，则移除
+	for isHavePoint {
+		switch data[len(data)-1] {
+		case 46: // 小数点=46
+			return data[0 : len(data)-1]
+		case 48: // 0=46
+			data = data[0 : len(data)-1]
+		default:
+			return data
+		}
+	}
+	return data
 }

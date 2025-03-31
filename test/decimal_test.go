@@ -8,8 +8,9 @@ import (
 )
 
 func TestNewFromX(t *testing.T) {
-	assert.Equal(t, decimal.NewFromString("13.456").Float64(), float64(13.456))
-	assert.Equal(t, decimal.NewFromFloat64(13.456).String(), "13.456")
+	assert.Equal(t, decimal.NewFromString("13.4560").String(), "13.456")
+	assert.Equal(t, decimal.NewFromString("100.000").String(), "100")
+	assert.Equal(t, decimal.NewFromFloat64(13.456).Float64(), float64(13.456))
 	assert.Equal(t, decimal.NewFromInt(13).IntPart(), int64(13))
 	assert.Equal(t, decimal.NewFromInt32(13).IntPart(), int64(13))
 	assert.Equal(t, decimal.NewFromInt64(13).IntPart(), int64(13))
@@ -55,6 +56,6 @@ func BenchmarkAddSub(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		float3.Add(float3)
 		float3.Sub(float3)
-		decimal.NewFromString("50.155")
+		decimal.NewFromString("100.000").String()
 	}
 }
