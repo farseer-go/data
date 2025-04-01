@@ -670,6 +670,9 @@ func (receiver *TableSet[Table]) InsertIgnore(po *Table) (int64, error) {
 
 // InsertList 批量新增记录
 func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSize int) (int64, error) {
+	if lst.Count() == 0 {
+		return 0, nil
+	}
 	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
 		batchSize = lst.Count()
@@ -680,6 +683,9 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 
 // InsertIgnoreList 批量新增记录（忽略主键、唯一键存在的记录）
 func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], batchSize int) (int64, error) {
+	if lst.Count() == 0 {
+		return 0, nil
+	}
 	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
 		batchSize = lst.Count()
