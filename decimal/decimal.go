@@ -9,6 +9,8 @@ import (
 )
 
 var Zero = Decimal{source: govalues.Zero}
+var One = Decimal{source: govalues.One}
+var Two = Decimal{source: govalues.Two}
 var Float001 = Decimal{source: govalues.MustParse("0.01")}
 
 func NewFromString(s string) Decimal {
