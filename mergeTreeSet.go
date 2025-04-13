@@ -2,6 +2,8 @@ package data
 
 import (
 	"fmt"
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -17,8 +19,8 @@ func newClickhouse[Table any](tableSet *TableSet[Table]) *mergeTreeSet {
 	}
 }
 
-// OptimizeFinal 手动执行合并
+// OptimizeFinal 手动执行合并（默认为当前月分区）
 func (receiver *mergeTreeSet) OptimizeFinal() (int64, error) {
-	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s FINAL;", receiver.tableName))
+	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, time.Now().Format("200601")))
 	return result.RowsAffected, result.Error
 }
