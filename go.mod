@@ -6,8 +6,8 @@ toolchain go1.23.3
 
 require (
 	github.com/farseer-go/collections v0.16.4
-	github.com/farseer-go/fs v0.16.4
-	github.com/farseer-go/mapper v0.16.3
+	github.com/farseer-go/fs v0.16.6
+	github.com/farseer-go/mapper v0.16.5
 	github.com/govalues/decimal v0.1.36
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/mysql v1.5.7
