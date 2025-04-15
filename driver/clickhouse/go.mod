@@ -5,8 +5,8 @@ go 1.23.0
 toolchain go1.23.3
 
 require (
-	github.com/farseer-go/data v0.16.0
-	github.com/farseer-go/fs v0.16.1
+	github.com/farseer-go/data v0.16.5
+	github.com/farseer-go/fs v0.16.6
 	gorm.io/driver/clickhouse v0.6.1
 	gorm.io/gorm v1.25.12
 )
@@ -16,8 +16,8 @@ require (
 	github.com/ClickHouse/ch-go v0.65.1 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/farseer-go/collections v0.16.0 // indirect
-	github.com/farseer-go/mapper v0.16.0 // indirect
+	github.com/farseer-go/collections v0.16.4 // indirect
+	github.com/farseer-go/mapper v0.16.5 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
