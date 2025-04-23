@@ -70,8 +70,19 @@ func (d Decimal) Div(e Decimal) Decimal {
 	return Decimal{source: r}
 }
 
+// 银行四舍五
 func (d Decimal) Round(scale int) Decimal {
 	return Decimal{source: d.source.Round(scale)}
+}
+
+// Ceil 返回大于或等于 d 的最近整数值。
+func (d Decimal) Ceil() Decimal {
+	return Decimal{source: d.source.Ceil(0)}
+}
+
+// Floor 返回小于或等于 d 的最近整数值。
+func (d Decimal) Floor() Decimal {
+	return Decimal{source: d.source.Floor(0)}
 }
 
 func (d Decimal) Float64() float64 {
@@ -99,11 +110,6 @@ func (d Decimal) Truncate() Decimal {
 // Abs 取绝对值
 func (d Decimal) Abs() Decimal {
 	return Decimal{source: d.source.Abs()}
-}
-
-// Ceil 返回大于或等于 d 的最近整数值。
-func (d Decimal) Ceil() Decimal {
-	return Decimal{source: d.source.Ceil(0)}
 }
 
 func (d Decimal) String() string {

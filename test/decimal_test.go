@@ -24,12 +24,6 @@ func TestBasicOpr(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13.88).MulFloat001().String(), "0.1388")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Mul(decimal.NewFromFloat64(2)).String(), "27.76")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Div(decimal.NewFromFloat64(2)).String(), "6.94")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(2).String(), "13.88")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(1).String(), "13.9")
-	assert.Equal(t, decimal.NewFromFloat64(13.44).Round(1).String(), "13.4")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Neg().String(), "-14")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Neg().Abs().String(), "14")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Abs().String(), "14")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(0), "14")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(1), "13.9")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(2), "13.88")
@@ -58,4 +52,28 @@ func BenchmarkAddSub(b *testing.B) {
 		float3.Sub(float3)
 		decimal.NewFromString("100.000").String()
 	}
+}
+
+func TestRound(t *testing.T) {
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(2).String(), "13.88")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(1).String(), "13.9")
+	assert.Equal(t, decimal.NewFromFloat64(13.44).Round(1).String(), "13.4")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Neg().String(), "-14")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Neg().Abs().String(), "14")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Round(0).Abs().String(), "14")
+	assert.Equal(t, decimal.NewFromFloat64(13.14).Round(1).String(), "13.1")
+	assert.Equal(t, decimal.NewFromFloat64(13.15).Round(1).String(), "13.2")
+	assert.Equal(t, decimal.NewFromFloat64(13.5).Round(0).String(), "14")
+}
+
+func TestCeil(t *testing.T) {
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Ceil().String(), "14")
+	assert.Equal(t, decimal.NewFromFloat64(13).Ceil().String(), "13")
+	assert.Equal(t, decimal.NewFromFloat64(13.0001).Ceil().String(), "14")
+}
+
+func TestFloor(t *testing.T) {
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Floor().String(), "13")
+	assert.Equal(t, decimal.NewFromFloat64(13).Floor().String(), "13")
+	assert.Equal(t, decimal.NewFromFloat64(13.0001).Floor().String(), "13")
 }
