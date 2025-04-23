@@ -70,6 +70,7 @@ func TestCeil(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Ceil().String(), "14")
 	assert.Equal(t, decimal.NewFromFloat64(13).Ceil().String(), "13")
 	assert.Equal(t, decimal.NewFromFloat64(13.0001).Ceil().String(), "14")
+	assert.Equal(t, decimal.NewFromFloat64(347.15).Ceil().String(), "348")
 }
 
 func TestFloor(t *testing.T) {

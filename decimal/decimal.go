@@ -70,7 +70,7 @@ func (d Decimal) Div(e Decimal) Decimal {
 	return Decimal{source: r}
 }
 
-// 银行四舍五
+// 四舍五入
 func (d Decimal) Round(scale int) Decimal {
 	return Decimal{source: d.source.Round(scale)}
 }
