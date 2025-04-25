@@ -24,3 +24,9 @@ func (receiver *mergeTreeSet) OptimizeFinal(partition time.Time) (int64, error) 
 	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, partition.Format("200601")))
 	return result.RowsAffected, result.Error
 }
+
+// OptimizeFinal 手动执行合并
+func (receiver *mergeTreeSet) OptimizeFinalAll() (int64, error) {
+	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s FINAL;", receiver.tableName))
+	return result.RowsAffected, result.Error
+}
