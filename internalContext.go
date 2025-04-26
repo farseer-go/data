@@ -81,6 +81,7 @@ func RegisterInternalContext(key string, configString string) {
 // 通过连接字符串解析数据库配置，得到internalContext
 func NewInternalContext(configString string) *internalContext {
 	config := configure.ParseString[dbConfig](configString)
+	config.keyName = configString // 先默认为连接字符串，如果上游是RegisterInternalContext函数，则会覆盖（如果不设置默认值，则不会复用连接字符串）
 	config.DataType = strings.ToLower(config.DataType)
 	config.migrated = strings.Contains(configString, "Migrate=")
 

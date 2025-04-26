@@ -110,8 +110,7 @@ func TestInitContext(t *testing.T) {
 
 		data.InitContext(context2, "test")
 		assert.Equal(t, "user", context2.User.GetTableName())
-		context2.User.SetTableName("user2")
-		assert.Equal(t, "user2", context2.User.GetTableName())
+		assert.Equal(t, "user2", context2.User.SetTableName("user2").GetTableName())
 	})
 }
 

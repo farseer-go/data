@@ -9,7 +9,7 @@ import (
 
 // 数据库配置
 type dbConfig struct {
-	keyName          string
+	keyName          string // 用于共享事务和共享连接池，如果不设置此值，每次都会重新创建连接
 	DataType         string
 	PoolMaxSize      int
 	PoolMinSize      int
