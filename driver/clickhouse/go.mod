@@ -5,10 +5,10 @@ go 1.23.0
 toolchain go1.23.3
 
 require (
-	github.com/farseer-go/data v0.16.0
-	github.com/farseer-go/fs v0.16.1
+	github.com/farseer-go/data v0.17.1
+	github.com/farseer-go/fs v0.17.1
 	gorm.io/driver/clickhouse v0.6.1
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.26.1
 )
 
 require (
@@ -16,8 +16,8 @@ require (
 	github.com/ClickHouse/ch-go v0.65.1 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.34.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/farseer-go/collections v0.16.0 // indirect
-	github.com/farseer-go/mapper v0.16.0 // indirect
+	github.com/farseer-go/collections v0.17.1 // indirect
+	github.com/farseer-go/mapper v0.17.1 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
@@ -37,8 +37,8 @@ require (
 	github.com/timandy/routine v1.1.5 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/hints v1.1.2 // indirect
