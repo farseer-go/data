@@ -117,7 +117,7 @@ func TestInitContext(t *testing.T) {
 func Test_checkConfig(t *testing.T) {
 	t.Run("unknownDataType", func(t *testing.T) {
 		assert.Panics(t, func() {
-			data.RegisterInternalContext("Database.test_oracle", "DataType=oracle,PoolMaxSize=50,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
+			data.RegisterInternalContext("Database.test_oracle", "DataType=oracle,PoolMaxSize=5,PoolMinSize=1,ConnectionString=root:steden@123@tcp(192.168.1.8:3306)/test?charset=utf8&parseTime=True&loc=Local")
 			data.NewContext[TestMysqlContext]("test_oracle").User.Count()
 		})
 	})

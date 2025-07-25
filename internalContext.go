@@ -46,11 +46,11 @@ type internalContext struct {
 }
 
 // RegisterInternalContext 注册内部上下文
-// DataType=mysql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
-// DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
-// DataType=clickhouse,PoolMaxSize=50,PoolMinSize=1,ConnectionString=clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=60s
-// DataType=postgresql,PoolMaxSize=50,PoolMinSize=1,ConnectionString=host=127.0.0.1 user=user password=123456 dbname=dbname port=9920 sslmode=disable TimeZone=Asia/Shanghai
-// DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=gorm.db
+// DataType=mysql,PoolMaxSize=5,PoolMinSize=1,ConnectionString=user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+// DataType=sqlserver,PoolMaxSize=5,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
+// DataType=clickhouse,PoolMaxSize=5,PoolMinSize=1,ConnectionString=clickhouse://user:123456@127.0.0.1:9000/dbname?dial_timeout=10s&read_timeout=60s
+// DataType=postgresql,PoolMaxSize=5,PoolMinSize=1,ConnectionString=host=127.0.0.1 user=user password=123456 dbname=dbname port=9920 sslmode=disable TimeZone=Asia/Shanghai
+// DataType=sqlite,PoolMaxSize=5,PoolMinSize=1,ConnectionString=gorm.db
 func RegisterInternalContext(key string, configString string) {
 	ins := NewInternalContext(configString)
 	if ins.dbConfig.ConnectionString == "" {
@@ -75,7 +75,7 @@ func RegisterInternalContext(key string, configString string) {
 		container.Remove[core.IHealthCheck]("db_" + key)
 	}
 	// 注册健康检查
-	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key}, "db_"+key)
+	container.RegisterInstance[core.IHealthCheck](&healthCheck{name: key, dataType: ins.dbConfig.DataType}, "db_"+key)
 }
 
 // 通过连接字符串解析数据库配置，得到internalContext
@@ -87,8 +87,8 @@ func NewInternalContext(configString string) *internalContext {
 
 	// 获取数据库名称
 	switch config.DataType {
-	case "sqlserver":
-		// DataType=sqlserver,PoolMaxSize=50,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
+	case "sqlserver", "mssql":
+		// DataType=sqlserver,PoolMaxSize=5,PoolMinSize=1,ConnectionString=sqlserver://user:123456@127.0.0.1:9930?database=dbname
 		dbNames := strings.Split(config.ConnectionString, "?") // database=dbname
 		for _, name := range dbNames {
 			if strings.HasPrefix(strings.ToLower(name), "database=") {
@@ -96,7 +96,7 @@ func NewInternalContext(configString string) *internalContext {
 			}
 		}
 	case "sqlite":
-		// DataType=sqlite,PoolMaxSize=50,PoolMinSize=1,ConnectionString=gorm.db
+		// DataType=sqlite,PoolMaxSize=5,PoolMinSize=1,ConnectionString=gorm.db
 		dbNames := strings.Split(config.ConnectionString, ",") // ConnectionString=gorm.db
 		for _, name := range dbNames {
 			if strings.HasPrefix(strings.ToLower(name), "connectionstring=") {
@@ -254,7 +254,7 @@ func (receiver *internalContext) GetDatabaseList() ([]string, error) {
 	switch receiver.dbConfig.DataType {
 	case "mysql":
 		sql = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys');"
-	case "sqlserver":
+	case "sqlserver", "mssql":
 		sql = "SELECT name FROM sys.databases;"
 	case "sqlite":
 	case "postgresql", "postgres":
@@ -281,7 +281,7 @@ func (receiver *internalContext) GetTableList(database string) ([]string, error)
 	switch receiver.dbConfig.DataType {
 	case "mysql":
 		sql = fmt.Sprintf("SHOW TABLES FROM %s;", database)
-	case "sqlserver":
+	case "sqlserver", "mssql":
 		sql = fmt.Sprintf("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = '%s';", database)
 	case "sqlite":
 		sql = "SELECT name FROM sqlite_master WHERE type = 'table';"
