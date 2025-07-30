@@ -19,6 +19,12 @@ func newClickhouse[Table any](tableSet *TableSet[Table]) *mergeTreeSet {
 	}
 }
 
+// OptimizeFinalByPartition 手动执行合并
+func (receiver *mergeTreeSet) OptimizeFinalByPartition(partition string) (int64, error) {
+	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, partition))
+	return result.RowsAffected, result.Error
+}
+
 // OptimizeFinal 手动执行合并
 func (receiver *mergeTreeSet) OptimizeFinal(partition time.Time) (int64, error) {
 	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, partition.Format("200601")))

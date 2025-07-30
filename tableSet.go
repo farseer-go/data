@@ -34,6 +34,7 @@ type TableSet[Table any] struct {
 	whereList  collections.List[whereQuery] // 条件SQL
 	orderList  collections.ListAny          // 排序SQL
 	limit      int                          // 限制数量
+	offset     int                          // 偏移数量
 	err        error                        // 错误
 }
 
@@ -230,6 +231,11 @@ func (receiver *TableSet[Table]) getClient() *gorm.DB {
 	// 设置limit
 	if receiver.limit > 0 {
 		receiver.ormClient.Limit(receiver.limit)
+	}
+
+	// 设置offset
+	if receiver.offset > 0 {
+		receiver.ormClient.Offset(receiver.offset)
 	}
 
 	// 强制索引
@@ -589,6 +595,13 @@ func (receiver *TableSet[Table]) Limit(limit int) *TableSet[Table] {
 	return session
 }
 
+// Offset 设置偏移量
+func (receiver *TableSet[Table]) Offset(offset int) *TableSet[Table] {
+	session := receiver.getOrCreateSession()
+	session.offset = offset
+	return session
+}
+
 // ToList 返回结果集
 func (receiver *TableSet[Table]) ToList() collections.List[Table] {
 	var lst []Table
@@ -617,7 +630,7 @@ func (receiver *TableSet[Table]) ToPageList(pageSize int, pageIndex int) collect
 	offset := (pageIndex - 1) * pageSize
 	var lst []Table
 	client.Offset(offset).Limit(pageSize).Find(&lst)
-	return collections.NewPageList[Table](collections.NewList(lst...), count)
+	return collections.NewPageList(collections.NewList(lst...), count)
 }
 
 // ToEntity 返回单个对象
