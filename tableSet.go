@@ -160,15 +160,16 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 
 		// 上下文没有开启事务
 		if gormDB == nil {
-			gormDB, receiver.err = open(receiver.dbContext.dbConfig)
-			if len(receiver.tableName) > 0 {
-				gormDB = gormDB.Table(receiver.tableName)
-			} else {
-				//var t Table
-				gormDB = gormDB.Session(&gorm.Session{ // .Model(&t)
-					SkipDefaultTransaction: gormDB.SkipDefaultTransaction,
-					Logger:                 gormDB.Logger,
-				})
+			if gormDB, receiver.err = open(receiver.dbContext.dbConfig); receiver.err == nil {
+				if len(receiver.tableName) > 0 {
+					gormDB = gormDB.Table(receiver.tableName)
+				} else {
+					//var t Table
+					gormDB = gormDB.Session(&gorm.Session{ // .Model(&t)
+						SkipDefaultTransaction: gormDB.SkipDefaultTransaction,
+						Logger:                 gormDB.Logger,
+					})
+				}
 			}
 		} else {
 			if len(receiver.tableName) > 0 {

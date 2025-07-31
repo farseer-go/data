@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -51,8 +52,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		})
 		defer traceDatabase.End(err)
 		if err != nil {
-			//_ = flog.Error(err)
-			return gormDB, err
+			return gormDB, fmt.Errorf("打开[%s]数据库[%s]失败：%s", strings.ToLower(dbConfig.DataType), dbConfig.keyName, err.Error())
 		}
 
 		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})

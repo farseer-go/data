@@ -78,3 +78,20 @@ func TestFloor(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13).Floor().String(), "13")
 	assert.Equal(t, decimal.NewFromFloat64(13.0001).Floor().String(), "13")
 }
+
+// BenchmarkDecimal-10     58111182                20.08 ns/op           24 B/op          1 allocs/op
+func BenchmarkDecimal(b *testing.B) {
+	d := decimal.NewFromString("13.4560")
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		d.String()
+	}
+}
+
+func BenchmarkDecimal2(b *testing.B) {
+	d := decimal.NewFromString("13.4560")
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		d.Float64()
+	}
+}
