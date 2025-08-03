@@ -50,8 +50,8 @@ func (op *TracePlugin) traceAfter(db *gorm.DB) {
 				dbName, _ := db.InstanceGet("DbName")
 				// 如果SQL太长，则截断
 				sql := db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
-				if len(sql) > 10240 {
-					sql = sql[:10240]
+				if len(sql) > 1000 {
+					sql = sql[:1000] + "......"
 				}
 				detail.TraceDetailDatabase.SetSql(parse.ToString(connectionString), parse.ToString(dbName), db.Statement.Table, sql, db.Statement.RowsAffected)
 			}
