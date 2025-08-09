@@ -2,9 +2,11 @@ package loggers
 
 import (
 	"context"
+	"time"
+
+	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/flog"
 	"gorm.io/gorm/logger"
-	"time"
 )
 
 type FsLogger struct {
@@ -33,7 +35,10 @@ func (f *FsLogger) Error(ctx context.Context, s string, i ...interface{}) {
 }
 
 func (f *FsLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
-	elapsed := time.Since(begin)
-	sql, rows := fc()
-	flog.Tracef("sql: %s, rows: %d, elapsed: %s, err: %v", sql, rows, elapsed, err)
+	// 配置文件中开启后，才打印trace
+	if configure.GetBool("Log.Component.data") {
+		elapsed := time.Since(begin)
+		sql, rows := fc()
+		flog.Tracef("sql: %s, rows: %d, elapsed: %s, err: %v", sql, rows, elapsed, err)
+	}
 }
