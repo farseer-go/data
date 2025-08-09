@@ -23,7 +23,9 @@ func (f *FsLogger) LogMode(level logger.LogLevel) logger.Interface {
 }
 
 func (f *FsLogger) Info(ctx context.Context, s string, i ...interface{}) {
-	flog.Infof(s, i...)
+	if configure.GetBool("Log.Component.data") {
+		flog.Infof(s, i...)
+	}
 }
 
 func (f *FsLogger) Warn(ctx context.Context, s string, i ...interface{}) {
