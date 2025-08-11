@@ -14,7 +14,7 @@ var Two = Decimal{source: govalues.Two}
 var Float001 = Decimal{source: govalues.MustParse("0.01")}
 
 func NewFromString(s string) Decimal {
-	d, _ := govalues.Parse(s)
+	d, _ := govalues.Parse(removeCommas(s))
 	return Decimal{source: d}
 }
 func NewFromFloat64(e float64) Decimal {
@@ -237,4 +237,16 @@ func (d Decimal) removeSufferZero() []byte {
 		}
 	}
 	return data
+}
+
+// 移除千分位
+func removeCommas(s string) string {
+	buf := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c != ',' {
+			buf = append(buf, c)
+		}
+	}
+	return string(buf)
 }
