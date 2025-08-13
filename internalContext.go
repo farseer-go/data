@@ -21,7 +21,7 @@ var routineOrmClient = make(map[string]asyncLocal.AsyncLocal[*gorm.DB])
 
 type IInternalContext interface {
 	core.ITransaction
-	Original() *gorm.DB
+	Original() (*gorm.DB, error)
 	// ExecuteSql 执行自定义SQL
 	ExecuteSql(sql string, values ...any) (int64, error)
 	// ExecuteSqlToResult 返回结果(执行自定义SQL)
@@ -198,7 +198,7 @@ func (receiver *internalContext) Rollback() {
 }
 
 // Original 返回原生的对象
-func (receiver *internalContext) Original() *gorm.DB {
+func (receiver *internalContext) Original() (*gorm.DB, error) {
 	var gormDB *gorm.DB
 	// 如果是动态连接，则routineOrmClient获取不到对象，因为receiver.dbConfig.keyName是空的
 	if asyncLocalGormDB, exists := routineOrmClient[receiver.dbConfig.keyName]; exists {
@@ -213,23 +213,31 @@ func (receiver *internalContext) Original() *gorm.DB {
 		gormDB = gormDB.Session(&gorm.Session{})
 	}
 
-	if err != nil {
-		return nil
-	}
-	return gormDB
+	return gormDB, err
 }
 
 // ExecuteSql 执行自定义SQL
 func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
-	result := receiver.Original().Exec(sql, values...)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSql，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+	result := original.Exec(sql, values...)
 	return result.RowsAffected, result.Error
 }
 
 // ExecuteSqlToResult 返回结果(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
-	result := receiver.Original().Raw(sql, values...)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToResult，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...)
 	result.Find(arrayOrEntity)
 	if result.Error != nil {
 		flog.Errorf("执行ExecuteSqlToResult时出现异常,sql=%s,err=%s", sql, result.Error.Error())
@@ -240,7 +248,13 @@ func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql strin
 // ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
-	result := receiver.Original().Raw(sql, values...).Scan(&field)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToValue，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...).Scan(&field)
 	return result.RowsAffected, result.Error
 }
 
@@ -262,9 +276,10 @@ func (receiver *internalContext) GetDatabaseList() ([]string, error) {
 	case "clickhouse":
 		sql = "SELECT name FROM system.databases WHERE name NOT IN ('INFORMATION_SCHEMA', 'default', 'information_schema', 'system');"
 	}
-	original := receiver.Original()
-	if original == nil {
-		return arrayOrEntity, fmt.Errorf("数据库连接失败")
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行GetDatabaseList，连接数据库时失败,err=%s", err.Error())
+		return arrayOrEntity, err
 	}
 
 	result := original.Raw(sql)
@@ -290,9 +305,10 @@ func (receiver *internalContext) GetTableList(database string) ([]string, error)
 	case "clickhouse":
 		sql = fmt.Sprintf("SELECT name FROM system.tables WHERE database = '%s' and engine <> 'View'", database)
 	}
-	original := receiver.Original()
-	if original == nil {
-		return arrayOrEntity, fmt.Errorf("数据库连接失败")
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行GetDatabaseList，连接数据库时失败,err=%s", err.Error())
+		return arrayOrEntity, err
 	}
 
 	result := original.Raw(sql)

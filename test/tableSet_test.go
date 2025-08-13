@@ -266,27 +266,41 @@ func TestTableSet(t *testing.T) {
 	t.Run("正常事务", func(t *testing.T) {
 		// 清空所有数据
 		_, _ = context.User.Where("Id > ?", 0).WhereIgnoreLessZero("Id = ?", 0).WhereIgnoreNil("Id = ?", nil).Delete()
+		lstUserPO := collections.NewList(UserPO{
+			Name: "aaa",
+			Age:  36,
+			Fullname: FullNameVO{
+				FirstName: "he",
+				LastName:  "steden",
+			},
+			Specialty: collections.NewList("go", "net"),
+			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
+			Gender:    Man,
+			IsEnable:  true,
+		}, UserPO{
+			Name: "bbb",
+			Age:  39,
+			Fullname: FullNameVO{
+				FirstName: "he2",
+				LastName:  "steden2",
+			},
+			Specialty: collections.NewList("go", "net"),
+			Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
+			Gender:    Man,
+			IsEnable:  true,
+		})
 
 		// 正常添加用户
 		container.Resolve[core.ITransaction]("test").Transaction(func() {
-			_ = context.User.Insert(&UserPO{
-				Name: "steden",
-				Age:  36,
-				Fullname: FullNameVO{
-					FirstName: "he",
-					LastName:  "steden",
-				},
-				Specialty: collections.NewList("go", "net"),
-				Attribute: collections.NewDictionaryFromMap(map[string]string{"work-year": "15"}),
-				Gender:    Man,
-				IsEnable:  true,
-			})
+			context.User.InsertList(lstUserPO, 1000)
 		})
 
-		u := context.User.Where("name = ?", "steden").ToEntity()
+		u := context.User.Where("name = ?", "aaa").ToEntity()
 		count := context.User.Count()
-		assert.Equal(t, "steden", u.Name)
-		assert.Equal(t, int64(1), count)
+		assert.Equal(t, lstUserPO.Index(0).Name, u.Name)
+		assert.Equal(t, lstUserPO.Index(0).Fullname.FirstName, u.Fullname.FirstName)
+		assert.Equal(t, lstUserPO.Index(0).Fullname.LastName, u.Fullname.LastName)
+		assert.Equal(t, int64(lstUserPO.Count()), count)
 
 		// 异常添加用户
 		assert.Panics(t, func() {
@@ -319,9 +333,44 @@ func TestTableSet(t *testing.T) {
 			})
 		})
 
-		u2 := context.User.Where("name = ?", "steden2").ToEntity()
-		count2 := context.User.Count()
-		assert.Equal(t, "", u2.Name)
-		assert.Equal(t, int64(1), count2)
+		u = context.User.Where("name = ?", "bbb").ToEntity()
+		count = context.User.Count()
+		assert.Equal(t, lstUserPO.Index(1).Name, u.Name)
+		assert.Equal(t, lstUserPO.Index(1).Fullname.FirstName, u.Fullname.FirstName)
+		assert.Equal(t, lstUserPO.Index(1).Fullname.LastName, u.Fullname.LastName)
+		assert.Equal(t, int64(lstUserPO.Count()), count)
+
+		u = context.User.Where("name = ?", "steden").ToEntity()
+		count = context.User.Count()
+		assert.Equal(t, "", u.Name)
+		assert.Equal(t, int64(lstUserPO.Count()), count)
+
+		// 尝试批量更新
+		lstUserPO.Foreach(func(item *UserPO) {
+			switch item.Name {
+			case "aaa":
+				item.Fullname.FirstName = "a1"
+				item.Fullname.LastName = "a2"
+			case "bbb":
+				item.Fullname.FirstName = "b1"
+				item.Fullname.LastName = "b2"
+			}
+		})
+
+		context.User.UpdateOrInsertListByPrimary(lstUserPO)
+
+		u = context.User.Where("name = ?", "aaa").ToEntity()
+		count = context.User.Count()
+		assert.Equal(t, lstUserPO.Index(0).Name, u.Name)
+		assert.Equal(t, lstUserPO.Index(0).Fullname.FirstName, u.Fullname.FirstName)
+		assert.Equal(t, lstUserPO.Index(0).Fullname.LastName, u.Fullname.LastName)
+		assert.Equal(t, int64(lstUserPO.Count()), count)
+
+		u = context.User.Where("name = ?", "bbb").ToEntity()
+		count = context.User.Count()
+		assert.Equal(t, lstUserPO.Index(1).Name, u.Name)
+		assert.Equal(t, lstUserPO.Index(1).Fullname.FirstName, u.Fullname.FirstName)
+		assert.Equal(t, lstUserPO.Index(1).Fullname.LastName, u.Fullname.LastName)
+		assert.Equal(t, int64(lstUserPO.Count()), count)
 	})
 }

@@ -21,6 +21,11 @@ func (c *healthCheck) Check() (string, error) {
 	default:
 		sql = "SELECT now()"
 	}
-	tx := c.Original().Raw(sql).Scan(&dbAt)
+	original, err := c.Original()
+	if err != nil {
+		return fmt.Sprintf("Database.%s", c.name), err
+	}
+
+	tx := original.Raw(sql).Scan(&dbAt)
 	return fmt.Sprintf("Database.%s => %s", c.name, dbAt.Format("2006-01-02 15:04:05")), tx.Error
 }
