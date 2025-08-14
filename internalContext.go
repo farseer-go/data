@@ -28,6 +28,8 @@ type IInternalContext interface {
 	ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error)
 	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
+	// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+	ExecuteSqlToMap(m any, sql string, values ...any) (int64, error)
 	// GetDatabaseList 获取数据库列表
 	GetDatabaseList() ([]string, error)
 	// GetTableList 获取所有表
@@ -255,6 +257,19 @@ func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values
 	}
 
 	result := original.Raw(sql, values...).Scan(&field)
+	return result.RowsAffected, result.Error
+}
+
+// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+func (receiver *internalContext) ExecuteSqlToMap(m any, sql string, values ...any) (int64, error) {
+	sql = receiver.nameReplacer.Replace(sql)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToMap，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...).Find(m)
 	return result.RowsAffected, result.Error
 }
 

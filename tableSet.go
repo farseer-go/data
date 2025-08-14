@@ -810,6 +810,12 @@ func (receiver *TableSet[Table]) Delete() (int64, error) {
 	return result.RowsAffected, result.Error
 }
 
+// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+func (receiver *TableSet[Table]) GetMap(m any, keyFieldName string, keyValue string) (int64, error) {
+	result := receiver.getOrCreateSession().getClient().Select(keyFieldName, keyValue).Find(m)
+	return result.RowsAffected, result.Error
+}
+
 // GetString 获取单条记录中的单个string类型字段值
 func (receiver *TableSet[Table]) GetString(fieldName string) string {
 	result := receiver.getOrCreateSession().getClient().Select(fieldName).Limit(1)
@@ -1109,6 +1115,12 @@ func (receiver *TableSet[Table]) ExecuteSqlToArray(sql string, values ...any) []
 	sql = receiver.nameReplacer.Replace(sql)
 	receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(&lst)
 	return lst
+}
+
+// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+func (receiver *TableSet[Table]) ExecuteSqlToMap(m any, sql string, values ...any) (int64, error) {
+	result := receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(m)
+	return result.RowsAffected, result.Error
 }
 
 // ExecuteSqlToList 返回结果集(执行自定义SQL)
