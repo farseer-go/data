@@ -269,7 +269,7 @@ func (receiver *internalContext) ExecuteSqlToMap(m any, sql string, values ...an
 		return 0, err
 	}
 
-	result := original.Raw(sql, values...).Find(m)
+	result := original.Raw(sql, values...).Scan(m)
 	return result.RowsAffected, result.Error
 }
 

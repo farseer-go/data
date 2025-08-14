@@ -1119,7 +1119,7 @@ func (receiver *TableSet[Table]) ExecuteSqlToArray(sql string, values ...any) []
 
 // GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
 func (receiver *TableSet[Table]) ExecuteSqlToMap(m any, sql string, values ...any) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Raw(sql, values...).Find(m)
+	result := receiver.getOrCreateSession().getClient().Raw(sql, values...).Scan(m)
 	return result.RowsAffected, result.Error
 }
 
