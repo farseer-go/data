@@ -14,6 +14,7 @@ import (
 )
 
 type TestMysqlContext struct {
+	data.IInternalContext
 	User data.TableSet[UserPO] `data:"name=user;migrate"`
 }
 

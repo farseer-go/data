@@ -10,6 +10,7 @@ import (
 	"github.com/farseer-go/data/decimal"
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/parse"
+	"github.com/farseer-go/fs/types"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
@@ -812,7 +813,31 @@ func (receiver *TableSet[Table]) Delete() (int64, error) {
 
 // GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
 func (receiver *TableSet[Table]) GetMap(m any, keyFieldName string, keyValue string) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Select(keyFieldName, keyValue).Find(m)
+	result := receiver.getOrCreateSession().getClient().Select(keyFieldName, keyValue)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return 0, nil
+	}
+	mapSliceVal := reflect.ValueOf(m).Elem()
+	mapType, isMap := types.IsMap(mapSliceVal)
+	keyType := mapType.Key()
+	valType := mapType.Elem()
+
+	if !isMap {
+		panic("mapSlice入参必须为map类型")
+	}
+	mapSliceVal.Set(reflect.MakeMap(mapType))
+
+	defer rows.Close()
+	for rows.Next() {
+		var k, v any
+		_ = rows.Scan(&k, &v)
+		k = parse.ConvertValue(k, keyType)
+		v = parse.ConvertValue(v, valType)
+
+		mapSliceVal.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+	}
+
 	return result.RowsAffected, result.Error
 }
 
@@ -1119,7 +1144,31 @@ func (receiver *TableSet[Table]) ExecuteSqlToArray(sql string, values ...any) []
 
 // GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
 func (receiver *TableSet[Table]) ExecuteSqlToMap(m any, sql string, values ...any) (int64, error) {
-	result := receiver.getOrCreateSession().getClient().Raw(sql, values...).Scan(m)
+	result := receiver.getOrCreateSession().getClient().Raw(sql, values...)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return 0, nil
+	}
+	mapSliceVal := reflect.ValueOf(m).Elem()
+	mapType, isMap := types.IsMap(mapSliceVal)
+	keyType := mapType.Key()
+	valType := mapType.Elem()
+
+	if !isMap {
+		panic("mapSlice入参必须为map类型")
+	}
+	mapSliceVal.Set(reflect.MakeMap(mapType))
+
+	defer rows.Close()
+	for rows.Next() {
+		var k, v any
+		_ = rows.Scan(&k, &v)
+		k = parse.ConvertValue(k, keyType)
+		v = parse.ConvertValue(v, valType)
+
+		mapSliceVal.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+	}
+
 	return result.RowsAffected, result.Error
 }
 

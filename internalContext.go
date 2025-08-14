@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"reflect"
 	"strings"
 
 	"github.com/farseer-go/fs/asyncLocal"
@@ -12,7 +13,9 @@ import (
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/exception"
 	"github.com/farseer-go/fs/flog"
+	"github.com/farseer-go/fs/parse"
 	"github.com/farseer-go/fs/trace"
+	"github.com/farseer-go/fs/types"
 	"gorm.io/gorm"
 )
 
@@ -269,7 +272,31 @@ func (receiver *internalContext) ExecuteSqlToMap(m any, sql string, values ...an
 		return 0, err
 	}
 
-	result := original.Raw(sql, values...).Scan(m)
+	result := original.Raw(sql, values...)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return result.RowsAffected, result.Error
+	}
+	mapSliceVal := reflect.ValueOf(m).Elem()
+	mapType, isMap := types.IsMap(mapSliceVal)
+	keyType := mapType.Key()
+	valType := mapType.Elem()
+
+	if !isMap {
+		panic("mapSlice入参必须为map类型")
+	}
+	mapSliceVal.Set(reflect.MakeMap(mapType))
+
+	defer rows.Close()
+	for rows.Next() {
+		var k, v any
+		_ = rows.Scan(&k, &v)
+		k = parse.ConvertValue(k, keyType)
+		v = parse.ConvertValue(v, valType)
+
+		mapSliceVal.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+	}
+
 	return result.RowsAffected, result.Error
 }
 

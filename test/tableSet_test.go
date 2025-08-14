@@ -372,5 +372,24 @@ func TestTableSet(t *testing.T) {
 		assert.Equal(t, lstUserPO.Index(1).Fullname.FirstName, u.Fullname.FirstName)
 		assert.Equal(t, lstUserPO.Index(1).Fullname.LastName, u.Fullname.LastName)
 		assert.Equal(t, int64(lstUserPO.Count()), count)
+
+		// 测试map
+		var mKV map[string]int
+		context.User.GetMap(&mKV, "name", "id")
+		assert.Greater(t, mKV["aaa"], 0)
+		assert.Greater(t, mKV["bbb"], 0)
+		assert.Equal(t, lstUserPO.Count(), len(mKV))
+
+		var mKV2 map[string]int
+		context.User.ExecuteSqlToMap(&mKV2, "select name,id from user")
+		assert.Greater(t, mKV2["aaa"], 0)
+		assert.Greater(t, mKV2["bbb"], 0)
+		assert.Equal(t, lstUserPO.Count(), len(mKV2))
+
+		var mKV3 map[string]int
+		context.ExecuteSqlToMap(&mKV3, "select name,id from user")
+		assert.Greater(t, mKV3["aaa"], 0)
+		assert.Greater(t, mKV3["bbb"], 0)
+		assert.Equal(t, lstUserPO.Count(), len(mKV3))
 	})
 }
