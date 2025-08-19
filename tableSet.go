@@ -786,6 +786,10 @@ func (receiver *TableSet[Table]) UpdateOrInsertListByPrimary(lstPO collections.L
 // UpdateOrInsertList 记录存在时（根据Fields判断）更新，不存在时插入(批量)
 // fields：唯一键 或 主键，即由哪些字段组成的条件为存在或不存在判定
 func (receiver *TableSet[Table]) UpdateOrInsertList(lstPO collections.List[Table], fields ...string) error {
+	if lstPO.Count() == 0 {
+		return nil
+	}
+
 	// []string转[]clause.Column
 	var clos []clause.Column
 	for _, field := range fields {
