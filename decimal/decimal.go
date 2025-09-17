@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
+	"strings"
 
 	govalues "github.com/govalues/decimal"
 )
@@ -132,6 +133,53 @@ func (d Decimal) String() string {
 func (d Decimal) StringFixed(pointStatCoinsPoint int) string {
 	f, _ := d.source.Round(pointStatCoinsPoint).Float64()
 	return fmt.Sprintf("%.*f", pointStatCoinsPoint, f)
+}
+
+// StringFixedThousandth 四舍五入，千分位逗号分隔
+func (d Decimal) StringFixedThousandth(pointStatCoinsPoint int) string {
+	f, _ := d.source.Round(pointStatCoinsPoint).Float64()
+	return formatNumberWithCommas(f, pointStatCoinsPoint)
+}
+
+func formatNumberWithCommas(number float64, precision int) string {
+	// 先格式化为带精度的数字字符串
+	base := fmt.Sprintf("%.*f", precision, number)
+
+	// 分离整数和小数部分
+	parts := strings.Split(base, ".")
+	integerPart := parts[0]
+
+	// 处理负数
+	isNegative := false
+	if integerPart != "" && integerPart[0] == '-' {
+		isNegative = true
+		integerPart = integerPart[1:]
+	}
+
+	// 为整数部分添加千分位逗号
+	var formatted strings.Builder
+	length := len(integerPart)
+
+	for i, char := range integerPart {
+		// 从右往左每3位添加一个逗号
+		if i > 0 && (length-i)%3 == 0 {
+			formatted.WriteString(",")
+		}
+		formatted.WriteRune(char)
+	}
+
+	// 组合结果
+	result := formatted.String()
+	if isNegative {
+		result = "-" + result
+	}
+
+	// 添加小数部分
+	if len(parts) > 1 {
+		result += "." + parts[1]
+	}
+
+	return result
 }
 
 // true  d > e

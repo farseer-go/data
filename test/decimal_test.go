@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewFromX(t *testing.T) {
-	assert.Equal(t, decimal.NewFromString("13.4560").String(), "13.456")
+	assert.Equal(t, decimal.NewFromString("1333.4560").String(), "1333.456")
 	assert.Equal(t, decimal.NewFromString("100.000").String(), "100")
 	assert.Equal(t, decimal.NewFromFloat64(13.456).Float64(), float64(13.456))
 	assert.Equal(t, decimal.NewFromInt(13).IntPart(), int64(13))
@@ -27,7 +27,9 @@ func TestBasicOpr(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(0), "14")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(1), "13.9")
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(2), "13.88")
-	assert.Equal(t, decimal.NewFromFloat64(13.88).Abs().StringFixed(3), "13.880")
+	assert.Equal(t, decimal.NewFromFloat64(1234.88).Abs().StringFixed(3), "1234.880")
+	assert.Equal(t, decimal.NewFromFloat64(1234.88).Abs().StringFixedThousandth(3), "1,234.880")
+
 	assert.False(t, decimal.NewFromFloat64(13.88).Greater(decimal.NewFromFloat64(13.88)))
 	assert.True(t, decimal.NewFromFloat64(13.88).GreaterEqual(decimal.NewFromFloat64(13.88)))
 	assert.True(t, decimal.NewFromFloat64(13.88).Greater(decimal.NewFromFloat64(13.11)))
