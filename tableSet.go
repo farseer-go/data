@@ -779,13 +779,13 @@ func (receiver *TableSet[Table]) UpdateOrInsert(po Table, fields ...string) erro
 }
 
 // UpdateOrInsertByPrimary 记录存在时（根据主键判断）更新，不存在时插入
-func (receiver *TableSet[Table]) UpdateOrInsertListByPrimary(lstPO collections.List[Table]) error {
-	return receiver.UpdateOrInsertList(lstPO, receiver.primaryName...)
+func (receiver *TableSet[Table]) UpdateOrInsertListByPrimary(lstPO collections.List[Table], batchSize int) error {
+	return receiver.UpdateOrInsertList(lstPO, batchSize, receiver.primaryName...)
 }
 
 // UpdateOrInsertList 记录存在时（根据Fields判断）更新，不存在时插入(批量)
 // fields：唯一键 或 主键，即由哪些字段组成的条件为存在或不存在判定
-func (receiver *TableSet[Table]) UpdateOrInsertList(lstPO collections.List[Table], fields ...string) error {
+func (receiver *TableSet[Table]) UpdateOrInsertList(lstPO collections.List[Table], batchSize int, fields ...string) error {
 	if lstPO.Count() == 0 {
 		return nil
 	}
@@ -795,12 +795,24 @@ func (receiver *TableSet[Table]) UpdateOrInsertList(lstPO collections.List[Table
 	for _, field := range fields {
 		clos = append(clos, clause.Column{Name: field})
 	}
+
 	pos := lstPO.ToArray()
-	result := receiver.getOrCreateSession().getClient().Clauses(clause.OnConflict{
-		Columns:   clos,
-		UpdateAll: true,
-	}).Create(&pos)
-	return result.Error
+	total := len(pos)
+	for i := 0; i < total; i += batchSize {
+		end := i + batchSize
+		if end > total {
+			end = total
+		}
+		batch := pos[i:end]
+		result := receiver.getOrCreateSession().getClient().Clauses(clause.OnConflict{
+			Columns:   clos,
+			UpdateAll: true,
+		}).Create(&batch)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+	return nil
 }
 
 // UpdateValue 修改单个字段
