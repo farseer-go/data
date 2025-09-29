@@ -357,7 +357,7 @@ func TestTableSet(t *testing.T) {
 			}
 		})
 
-		context.User.UpdateOrInsertListByPrimary(lstUserPO)
+		context.User.UpdateOrInsertListByPrimary(lstUserPO, 100)
 
 		u = context.User.Where("name = ?", "aaa").ToEntity()
 		count = context.User.Count()
