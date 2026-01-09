@@ -3,6 +3,7 @@ package data
 import (
 	"github.com/farseer-go/fs/configure"
 	"github.com/farseer-go/fs/container"
+	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/modules"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,8 @@ func (module Module) DependsModule() []modules.FarseerModule {
 
 func (module Module) PreInitialize() {
 	databaseConn = make(map[string]*gorm.DB)
+	// 注册包级别的连接检查器（默认实现）
+	container.Register(func() core.IConnectionChecker { return &connectionChecker{} }, "data")
 }
 
 func (module Module) Initialize() {
