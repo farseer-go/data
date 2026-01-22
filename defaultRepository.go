@@ -91,5 +91,5 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) IsExists(id any) bool
 }
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) Now() (time.Time, error) {
-	return receiver.getInternalContext.GetInternalContext().Now()
+	return receiver.table.dbContext.Now()
 }
