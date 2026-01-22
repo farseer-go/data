@@ -1,6 +1,10 @@
 package data
 
-import "github.com/farseer-go/collections"
+import (
+	"time"
+
+	"github.com/farseer-go/collections"
+)
 
 // IRepository 通用的仓储接口，实现常用的CURD
 type IRepository[TDomainObject any] interface {
@@ -26,4 +30,6 @@ type IRepository[TDomainObject any] interface {
 	Delete(id any) (int64, error)
 	// IsExists 记录是否存在
 	IsExists(id any) bool
+	// 获取数据库时间
+	Now() (time.Time, error)
 }

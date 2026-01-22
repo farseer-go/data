@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/farseer-go/fs/asyncLocal"
 	"github.com/farseer-go/fs/configure"
@@ -37,6 +38,8 @@ type IInternalContext interface {
 	GetDatabaseList() ([]string, error)
 	// GetTableList 获取所有表
 	GetTableList(database string) ([]string, error)
+	// 获取数据库时间
+	Now() (time.Time, error)
 }
 
 type IGetInternalContext interface {
@@ -359,4 +362,22 @@ func (receiver *internalContext) GetTableList(database string) ([]string, error)
 		return arrayOrEntity, fmt.Errorf("执行GetTableList时出现异常,sql=%s,err=%s", sql, result.Error.Error())
 	}
 	return arrayOrEntity, nil
+}
+
+// 获取数据库时间
+func (receiver *internalContext) Now() (time.Time, error) {
+	trace.SetComment("获取数据库时间")
+	var dbAt time.Time
+	original, err := receiver.Original()
+	switch receiver.dbConfig.DataType {
+	case "mysql", "postgresql", "postgres", "clickhouse":
+		_ = original.Raw("select now()").Scan(&dbAt)
+	case "sqlserver", "mssql":
+		_ = original.Raw("select getdate()").Scan(&dbAt)
+	case "sqlite":
+		_ = original.Raw("select datetime('now')").Scan(&dbAt)
+	default:
+		err = fmt.Errorf("不支持的数据库类型：%s", receiver.dbConfig.DataType)
+	}
+	return dbAt, err
 }

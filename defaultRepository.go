@@ -1,6 +1,8 @@
 package data
 
 import (
+	"time"
+
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/mapper"
 )
@@ -86,4 +88,8 @@ func (receiver *DefaultRepository[TPoType, TDomainObject]) Delete(id any) (int64
 
 func (receiver *DefaultRepository[TPoType, TDomainObject]) IsExists(id any) bool {
 	return receiver.table.setDbContext(receiver.getInternalContext).Where(receiver.primaryName[0], id).IsExists()
+}
+
+func (receiver *DefaultRepository[TPoType, TDomainObject]) Now() (time.Time, error) {
+	return receiver.getInternalContext.GetInternalContext().Now()
 }
