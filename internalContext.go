@@ -62,10 +62,10 @@ type internalContext struct {
 func RegisterInternalContext(key string, configString string) {
 	ins := NewInternalContext(configString)
 	if ins.dbConfig.ConnectionString == "" {
-		panic("[farseer.yaml]Database." + key + ".ConnectionString，配置不正确" + configString)
+		panic("[config.yaml]Database." + key + ".ConnectionString，配置不正确" + configString)
 	}
 	if ins.dbConfig.DataType == "" {
-		panic("[farseer.yaml]Database." + key + ".DataType，配置不正确：" + configString)
+		panic("[config.yaml]Database." + key + ".DataType，配置不正确：" + configString)
 	}
 	ins.dbConfig.keyName = key
 

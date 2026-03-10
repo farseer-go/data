@@ -18,7 +18,7 @@ var emptyGetInternalContextVal = reflect.New(getInternalContextType).Elem()
 type IDbContext interface{}
 
 // NewContext 数据库上下文初始化
-// keyName：数据库配置名称，对应./farseer.yaml 中的 Database节点
+// keyName：数据库配置名称，对应./config.yaml 中的 Database节点
 // autoCreateTable：true表示自动创建表
 // 同一个上下文生命周期内，共享一个orm client
 func NewContext[TDbContext IDbContext](dbName string) *TDbContext {
@@ -39,7 +39,7 @@ func InitContext[TDbContext IDbContext](repositoryContext *TDbContext, dbName st
 
 	transaction := container.Resolve[core.ITransaction](dbName)
 	if transaction == nil {
-		flog.Panicf("初始化TDbContext失败，请确认./farseer.yaml配置文件中的Database.%s是否正确", dbName)
+		flog.Panicf("初始化TDbContext失败，请确认./config.yaml配置文件中的Database.%s是否正确", dbName)
 	}
 	internalContextType := reflect.ValueOf(transaction.(*internalContext))
 	contextValueOf := reflect.ValueOf(repositoryContext).Elem()
