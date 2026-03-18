@@ -17,11 +17,12 @@ import (
 	"github.com/farseer-go/fs/parse"
 	"github.com/farseer-go/fs/trace"
 	"github.com/farseer-go/fs/types"
+	"github.com/timandy/routine"
 	"gorm.io/gorm"
 )
 
 // 实现同一个协程下的事务作用域
-var routineOrmClient = make(map[string]asyncLocal.AsyncLocal[*gorm.DB])
+var routineOrmClient = make(map[string]routine.ThreadLocal[*gorm.DB])
 
 type IInternalContext interface {
 	core.ITransaction

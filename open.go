@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/farseer-go/data/loggers"
-
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
