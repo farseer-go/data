@@ -692,12 +692,9 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 	var result *gorm.DB
 	var rowsAffected int64
 	var err error
-	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
-		//result = receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), lst.Count())
-		// 2. 使用手动事务块（注意：全局配置必须依然是 SkipDefaultTransaction: true）
-		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN
-		// 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
+		// 使用手动事务块（注意：全局配置必须依然是 SkipDefaultTransaction: true）
+		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN, 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
 		err = receiver.getOrCreateSession().getClient().Transaction(func(tx *gorm.DB) error {
 			result := tx.CreateInBatches(lst.ToArray(), batchSize)
 			if result.Error != nil {
@@ -724,18 +721,33 @@ func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], b
 	if lst.Count() == 0 {
 		return 0, nil
 	}
-	// 在clickhouse数据库中，gorm官方包会出现异常：当batchSize小于lst.Count时。会收到：code: 101, message: Unexpected packet Query received from client的错误
+
+	var result *gorm.DB
+	var rowsAffected int64
+	var err error
+
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
-		batchSize = lst.Count()
+		// 使用手动事务块（注意：全局配置必须依然是 SkipDefaultTransaction: true）
+		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN, 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
+		err = receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).Transaction(func(tx *gorm.DB) error {
+			result := tx.CreateInBatches(lst.ToArray(), batchSize)
+			if result.Error != nil {
+				return result.Error
+			}
+			rowsAffected = result.RowsAffected
+			return nil
+		})
+		// 针对 clickhouse 的 code: 101 错误，清理脏连接
+		if err != nil {
+			receiver.cleanDirtyConnectionOnError(err)
+		}
+	} else {
+		result = receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).CreateInBatches(lst.ToArray(), batchSize)
+		rowsAffected = result.RowsAffected
+		err = result.Error
 	}
-	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).CreateInBatches(lst.ToArray(), batchSize)
 
-	// 针对 clickhouse 的 code: 101 错误，清理脏连接
-	if result.Error != nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
-		receiver.cleanDirtyConnectionOnError(result.Error)
-	}
-
-	return result.RowsAffected, result.Error
+	return rowsAffected, err
 }
 
 // Expr 对字段做表达式操作
