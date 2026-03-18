@@ -38,7 +38,6 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		gormDB, err := gorm.Open(dbConfig.GetDriver(), &gorm.Config{
 			SkipDefaultTransaction:                   skipDefaultTransaction,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
-			PrepareStmt:                              true,
 			Logger:                                   loggers.NewFsLogger(),
 			//Logger: logger.New(
 			//	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
