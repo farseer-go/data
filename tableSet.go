@@ -9,6 +9,7 @@ import (
 	"github.com/farseer-go/collections"
 	"github.com/farseer-go/data/decimal"
 	"github.com/farseer-go/fs/container"
+	"github.com/farseer-go/fs/flog"
 	"github.com/farseer-go/fs/parse"
 	"github.com/farseer-go/fs/types"
 	"gorm.io/gorm"
@@ -1243,6 +1244,7 @@ func (receiver *TableSet[Table]) Clickhouse() *mergeTreeSet {
 func (receiver *TableSet[Table]) cleanDirtyConnectionOnError(err error) {
 	// 检查是否是 code: 101 错误
 	if strings.Contains(err.Error(), "code: 101") || strings.Contains(err.Error(), "Unexpected packet") {
+		flog.Warningf("出现了101错误,设置 MaxIdleConns=0，强制关闭所有空闲连接")
 		// 关键修复：强制清理连接池中的空闲连接
 		// 原理：code: 101 说明连接池中可能有脏连接（TCP缓冲区有残留数据）
 		// 通过设置 MaxIdleConns=0，强制关闭所有空闲连接
