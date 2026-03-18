@@ -2,10 +2,11 @@ package data
 
 import (
 	"fmt"
-	"github.com/farseer-go/data/loggers"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/farseer-go/data/loggers"
 
 	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/trace"
@@ -29,14 +30,15 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 
 		// 禁用默认事务
 		skipDefaultTransaction := true
-		// clickhouse的BUG，必须设为false，则否会出现数据无法写入的问题
-		if strings.ToLower(dbConfig.DataType) == "clickhouse" {
-			skipDefaultTransaction = false
-		}
+		// // clickhouse的BUG，必须设为false，则否会出现数据无法写入的问题
+		// if strings.ToLower(dbConfig.DataType) == "clickhouse" {
+		// 	skipDefaultTransaction = false
+		// }
 
 		gormDB, err := gorm.Open(dbConfig.GetDriver(), &gorm.Config{
 			SkipDefaultTransaction:                   skipDefaultTransaction,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
+			Logger:                                   loggers.NewFsLogger(),
 			//Logger: logger.New(
 			//	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 			//	logger.Config{
@@ -47,7 +49,6 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 			//		LogLevel:                  logger.Error, // Log level
 			//	},
 			//),
-			Logger: loggers.NewFsLogger(),
 		})
 		defer traceDatabase.End(err)
 		if err != nil {
@@ -55,6 +56,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 		}
 
 		_ = gormDB.Use(&TracePlugin{traceManager: traceManager})
+		// 设置池大小
 		setPool(gormDB, dbConfig)
 		// 如果是动态连接，dbConfig.keyName是空的
 		if dbConfig.keyName != "" {
@@ -74,6 +76,17 @@ func setPool(gormDB *gorm.DB, dbConfig *dbConfig) {
 		// 设置打开数据库连接的最大数量。
 		sqlDB.SetMaxOpenConns(dbConfig.PoolMaxSize)
 	}
-	// 设置了连接可复用的最大时间。
-	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// clickhouse需要更短的连接生命周期和空闲超时，避免连接状态不一致
+	if strings.ToLower(dbConfig.DataType) == "clickhouse" {
+		// 强制连接在使用一段时间后被关闭重建，防止连接因网络中间件超时变“脏”。 (关键！)
+		// 建议设置为 5-10 分钟。
+		sqlDB.SetConnMaxLifetime(5 * time.Minute)
+		// 设置连接最大空闲时间
+		// 连接空闲超过多久就丢弃。
+		sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+	} else {
+		// 其他数据库设置了连接可复用的最大时间。
+		sqlDB.SetConnMaxLifetime(time.Hour)
+	}
 }

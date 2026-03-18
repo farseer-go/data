@@ -693,6 +693,12 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 		batchSize = lst.Count()
 	}
 	result := receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
+
+	// 针对 clickhouse 的 code: 101 错误，清理脏连接
+	if result.Error != nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		receiver.cleanDirtyConnectionOnError(result.Error)
+	}
+
 	return result.RowsAffected, result.Error
 }
 
@@ -706,6 +712,12 @@ func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], b
 		batchSize = lst.Count()
 	}
 	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).CreateInBatches(lst.ToArray(), batchSize)
+
+	// 针对 clickhouse 的 code: 101 错误，清理脏连接
+	if result.Error != nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		receiver.cleanDirtyConnectionOnError(result.Error)
+	}
+
 	return result.RowsAffected, result.Error
 }
 
@@ -1222,6 +1234,30 @@ func (receiver *TableSet[Table]) GetPrimaryName() {
 // Clickhouse 返回Clickhouse的对象
 func (receiver *TableSet[Table]) Clickhouse() *mergeTreeSet {
 	return newClickhouse(receiver.getOrCreateSession())
+}
+
+// cleanDirtyConnectionOnError 清理脏连接，解决 clickhouse code: 101 错误
+// 该错误的根本原因：TCP缓冲区残留数据导致协议错误
+// 核心策略：遇到 code: 101 错误时，强制清理连接池中的脏连接
+// 这样下次重试（由MQ层面触发）时，就能获取到干净的连接
+func (receiver *TableSet[Table]) cleanDirtyConnectionOnError(err error) {
+	// 检查是否是 code: 101 错误
+	if strings.Contains(err.Error(), "code: 101") || strings.Contains(err.Error(), "Unexpected packet") {
+		// 关键修复：强制清理连接池中的空闲连接
+		// 原理：code: 101 说明连接池中可能有脏连接（TCP缓冲区有残留数据）
+		// 通过设置 MaxIdleConns=0，强制关闭所有空闲连接
+		// 这样下次MQ重试时，会获取到全新的、干净的连接
+		if gormDB, err := open(receiver.dbContext.dbConfig); err == nil {
+			if sqlDB, err := gormDB.DB(); err == nil {
+				sqlDB.SetMaxIdleConns(0)          // 不保留任何空闲连接
+				time.Sleep(time.Millisecond * 50) // 等待连接池清理
+				// 恢复配置
+				if receiver.dbContext.dbConfig.PoolMaxSize > 0 {
+					sqlDB.SetMaxIdleConns(receiver.dbContext.dbConfig.PoolMaxSize / 3)
+				}
+			}
+		}
+	}
 }
 
 // 大写字母，转蛇形
