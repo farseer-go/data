@@ -695,6 +695,15 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 	}
 	result := receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
 
+	// --- 关键点：强制 Flush ---
+	// 在 CreateInBatches 后手动执行一次 Ping
+	// 这会强制 clickhouse-go 驱动清理当前连接的缓冲区，确保数据立即发出
+	if result.Error == nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		if sqlDB, err := receiver.getOrCreateSession().getClient().DB(); err == nil {
+			sqlDB.Ping()
+		}
+	}
+
 	// 针对 clickhouse 的 code: 101 错误，清理脏连接
 	if result.Error != nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
 		receiver.cleanDirtyConnectionOnError(result.Error)
@@ -713,6 +722,15 @@ func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], b
 		batchSize = lst.Count()
 	}
 	result := receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).CreateInBatches(lst.ToArray(), batchSize)
+
+	// --- 关键点：强制 Flush ---
+	// 在 CreateInBatches 后手动执行一次 Ping
+	// 这会强制 clickhouse-go 驱动清理当前连接的缓冲区，确保数据立即发出
+	if result.Error == nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {
+		if sqlDB, err := receiver.getOrCreateSession().getClient().DB(); err == nil {
+			sqlDB.Ping()
+		}
+	}
 
 	// 针对 clickhouse 的 code: 101 错误，清理脏连接
 	if result.Error != nil && receiver.dbContext.dbConfig.DataType == "clickhouse" {

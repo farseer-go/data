@@ -26,13 +26,13 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 	// 	connectionString += "&connection_max_life_time=300"
 	// }
 
-	if !strings.Contains(connectionString, "&async_insert=") {
-		connectionString += "&async_insert=1"
-	}
+	// if !strings.Contains(connectionString, "&async_insert=") {
+	// 	connectionString += "&async_insert=1"
+	// }
 
-	if !strings.Contains(connectionString, "&wait_for_async_insert=") {
-		connectionString += "&wait_for_async_insert=1"
-	}
+	// if !strings.Contains(connectionString, "&wait_for_async_insert=") {
+	// 	connectionString += "&wait_for_async_insert=1"
+	// }
 
 	return clickhouse.New(clickhouse.Config{
 		DSN:                          connectionString,
