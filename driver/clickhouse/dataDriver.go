@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/farseer-go/data"
-	"gorm.io/driver/clickhouse"
+	gormClickhouse "gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
 )
 
@@ -20,8 +20,7 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 		// - max_execution_time=60 (查询最大执行时间)
 		connectionString += "&max_execution_time=60"
 	}
-
-	return clickhouse.New(clickhouse.Config{
+	return gormClickhouse.New(gormClickhouse.Config{
 		DSN:                          connectionString,
 		DisableDatetimePrecision:     true,     // disable datetime64 precision, not supported before clickhouse 20.4
 		DontSupportRenameColumn:      true,     // rename column not supported before clickhouse 20.4

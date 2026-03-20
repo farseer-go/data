@@ -30,6 +30,7 @@ type TableSet[Table any] struct {
 	nameReplacer   *strings.Replacer // 替换dbName、tableName
 	ormClient      *gorm.DB          // 最外层的ormClient一定是nil的
 	layer          int               // 链式第几层
+	useTransaction bool              // 是否使用了事务
 	// 字段筛选（官方再第二次设置时，会覆盖第一次的设置，因此需要暂存）
 	selectList collections.ListAny          // 筛选字段
 	omitList   collections.List[string]     // 过滤字段
@@ -159,9 +160,9 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 	if receiver.layer == 0 {
 		// 先从上下文中读取事务
 		gormDB := routineOrmClient[receiver.dbContext.dbConfig.keyName].Get()
-
+		useTransaction := gormDB == nil
 		// 上下文没有开启事务
-		if gormDB == nil {
+		if useTransaction {
 			if gormDB, receiver.err = open(receiver.dbContext.dbConfig); receiver.err == nil {
 				if len(receiver.tableName) > 0 {
 					gormDB = gormDB.Table(receiver.tableName)
@@ -180,18 +181,19 @@ func (receiver *TableSet[Table]) getOrCreateSession() *TableSet[Table] {
 		}
 
 		return &TableSet[Table]{
-			dbContext:    receiver.dbContext,
-			dbName:       receiver.dbName,
-			tableName:    receiver.tableName,
-			nameReplacer: receiver.nameReplacer,
-			ormClient:    gormDB,
-			err:          receiver.err,
-			layer:        1,
-			selectList:   collections.NewListAny(),
-			omitList:     collections.NewList[string](),
-			whereList:    collections.NewList[whereQuery](),
-			orderList:    collections.NewListAny(),
-			primaryName:  receiver.primaryName,
+			dbContext:      receiver.dbContext,
+			dbName:         receiver.dbName,
+			tableName:      receiver.tableName,
+			nameReplacer:   receiver.nameReplacer,
+			ormClient:      gormDB,
+			err:            receiver.err,
+			layer:          1,
+			useTransaction: useTransaction,
+			selectList:     collections.NewListAny(),
+			omitList:       collections.NewList[string](),
+			whereList:      collections.NewList[whereQuery](),
+			orderList:      collections.NewListAny(),
+			primaryName:    receiver.primaryName,
 		}
 	}
 	return receiver
@@ -692,11 +694,12 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 	var result *gorm.DB
 	var rowsAffected int64
 	var err error
+
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
-		// 使用手动事务块（注意：全局配置必须依然是 SkipDefaultTransaction: true）
 		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN, 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
-		err = receiver.getOrCreateSession().getClient().Transaction(func(tx *gorm.DB) error {
-			result := tx.CreateInBatches(lst.ToArray(), batchSize)
+		session := receiver.getOrCreateSession()
+		err = session.getClient().Debug().Transaction(func(tx *gorm.DB) error { // Transaction必须这么使用,否则数据库查不到数据
+			result := tx.CreateInBatches(lst.ToArray(), lst.Count()) // 不能使用batchSize,会出现code: 101, message: Unexpected packet Query received from client
 			if result.Error != nil {
 				return result.Error
 			}
@@ -706,6 +709,7 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 		// 针对 clickhouse 的 code: 101 错误，清理脏连接
 		if err != nil {
 			receiver.cleanDirtyConnectionOnError(err)
+			return rowsAffected, err
 		}
 	} else {
 		result = receiver.getOrCreateSession().getClient().CreateInBatches(lst.ToArray(), batchSize)
@@ -727,10 +731,9 @@ func (receiver *TableSet[Table]) InsertIgnoreList(lst collections.List[Table], b
 	var err error
 
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
-		// 使用手动事务块（注意：全局配置必须依然是 SkipDefaultTransaction: true）
 		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN, 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
 		err = receiver.getOrCreateSession().getClient().Clauses(clause.Insert{Modifier: "IGNORE"}).Transaction(func(tx *gorm.DB) error {
-			result := tx.CreateInBatches(lst.ToArray(), batchSize)
+			result := tx.CreateInBatches(lst.ToArray(), lst.Count()) // 不能使用batchSize,会出现code: 101, message: Unexpected packet Query received from client
 			if result.Error != nil {
 				return result.Error
 			}

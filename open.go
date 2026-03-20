@@ -31,16 +31,16 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 			SkipDefaultTransaction:                   true,
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁止自动创建数据库外键约束
 			Logger:                                   loggers.NewFsLogger(),
-			//Logger: logger.New(
-			//	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-			//	logger.Config{
-			//		SlowThreshold:             time.Second, // 慢 SQL 阈值
-			//		Colorful:                  false,       // 禁用彩色打印
-			//		IgnoreRecordNotFoundError: true,
-			//		ParameterizedQueries:      false,
-			//		LogLevel:                  logger.Error, // Log level
-			//	},
-			//),
+			// Logger: logger.New(
+			// 	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+			// 	logger.Config{
+			// 		SlowThreshold:             time.Second, // 慢 SQL 阈值
+			// 		Colorful:                  false,       // 禁用彩色打印
+			// 		IgnoreRecordNotFoundError: true,
+			// 		ParameterizedQueries:      false,
+			// 		LogLevel:                  logger.Info, // Log level
+			// 	},
+			// ),
 		})
 		defer traceDatabase.End(err)
 		if err != nil {
@@ -62,23 +62,24 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 // 设置池大小
 func setPool(gormDB *gorm.DB, dbConfig *dbConfig) {
 	sqlDB, _ := gormDB.DB()
-	if dbConfig.PoolMaxSize > 0 {
-		// 设置空闲连接池中连接的最大数量
-		sqlDB.SetMaxIdleConns(dbConfig.PoolMaxSize / 3)
-		// 设置打开数据库连接的最大数量。
-		sqlDB.SetMaxOpenConns(dbConfig.PoolMaxSize)
+
+	// 建议：MaxOpenConns 和 MaxIdleConns 设置为相同值
+	// 这样可以避免连接频繁创建和销毁带来的性能损耗
+	// 建议值：根据你的并发量，设置为 10-20 比较合适
+	maxSize := dbConfig.PoolMaxSize
+	if maxSize < 10 {
+		maxSize = 10 // 强制最小10个，避免瓶颈
 	}
 
-	// clickhouse需要更短的连接生命周期和空闲超时，避免连接状态不一致
+	sqlDB.SetMaxOpenConns(maxSize) // 最大连接数
+	sqlDB.SetMaxIdleConns(maxSize) // 空闲连接数等于最大连接数（保持长连接）
+
 	if strings.ToLower(dbConfig.DataType) == "clickhouse" {
-		// 强制连接在使用一段时间后被关闭重建，防止连接因网络中间件超时变“脏”。 (关键！)
-		// 建议设置为 5-10 分钟。
-		sqlDB.SetConnMaxLifetime(5 * time.Minute)
-		// 设置连接最大空闲时间
-		// 连接空闲超过多久就丢弃。
-		sqlDB.SetConnMaxIdleTime(1 * time.Minute)
+		// 这样可以避免每隔几分钟就重建连接
+		sqlDB.SetConnMaxLifetime(10 * time.Minute)
+		// 空闲超时：既然 MaxIdleConns 已经等于 MaxOpenConns，这个参数主要防止极端空闲
+		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	} else {
-		// 其他数据库设置了连接可复用的最大时间。
 		sqlDB.SetConnMaxLifetime(time.Hour)
 	}
 }
