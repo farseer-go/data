@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	govalues "github.com/govalues/decimal"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 var Zero = Decimal{source: govalues.Zero}
@@ -242,6 +243,30 @@ func (d Decimal) MarshalJSON() ([]byte, error) {
 	text = append(text, d.removeSufferZero()...)
 	text = append(text, '"')
 	return text, nil
+}
+
+// MarshalMsgpack 将 Decimal 转为二进制字符串存储
+func (d Decimal) MarshalMsgpack() ([]byte, error) {
+	// 1. 获取处理后的数值切片 (去掉多余的 0)
+	val := d.removeSufferZero()
+
+	// 2. 直接序列化为 Msgpack 字符串格式
+	// 注意：Msgpack 内部会自动处理长度头，不需要像 JSON 那样手动拼引号 ""
+	return msgpack.Marshal(string(val))
+}
+
+// UnmarshalMsgpack 从二进制中恢复 Decimal
+func (d *Decimal) UnmarshalMsgpack(data []byte) error {
+	var s string
+	// 1. 先解出字符串
+	if err := msgpack.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	// 2. 利用现有的 Decimal 内部解析逻辑恢复数据
+	// 这里假设你的 d.source 支持从字符串填充，或者你可以直接操作 d.source
+	// 如果 d.source 是 shopspring/decimal 等库，通常有 SetString 方法
+	return d.source.UnmarshalText([]byte(s))
 }
 func (d *Decimal) UnmarshalText(text []byte) error       { return d.source.UnmarshalText(text) }
 func (d Decimal) AppendText(text []byte) ([]byte, error) { return d.source.AppendText(text) }
