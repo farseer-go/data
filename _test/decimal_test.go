@@ -68,6 +68,18 @@ func TestRound(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13.5).Round(0).String(), "14")
 }
 
+func TestTrunc(t *testing.T) {
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Trunc(2).String(), "13.88")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Trunc(1).String(), "13.8")
+	assert.Equal(t, decimal.NewFromFloat64(13.44).Trunc(1).String(), "13.4")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Trunc(0).Neg().String(), "-13")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Trunc(0).Neg().Abs().String(), "13")
+	assert.Equal(t, decimal.NewFromFloat64(13.88).Trunc(0).Abs().String(), "13")
+	assert.Equal(t, decimal.NewFromFloat64(13.14).Trunc(1).String(), "13.1")
+	assert.Equal(t, decimal.NewFromFloat64(13.15).Trunc(1).String(), "13.1")
+	assert.Equal(t, decimal.NewFromFloat64(13.5).Trunc(0).String(), "13")
+}
+
 func TestCeil(t *testing.T) {
 	assert.Equal(t, decimal.NewFromFloat64(13.88).Ceil().String(), "14")
 	assert.Equal(t, decimal.NewFromFloat64(13).Ceil().String(), "13")

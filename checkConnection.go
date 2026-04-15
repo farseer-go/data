@@ -47,7 +47,6 @@ func (c *connectionChecker) Check(configString string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("获取数据库连接失败[%s]：%s", internalCtx.dbConfig.DataType, err.Error())
 	}
-	defer func() { sqlDB.Close() }()
 
 	if err := sqlDB.Ping(); err != nil {
 		return false, fmt.Errorf("Ping数据库失败[%s]：%s", internalCtx.dbConfig.DataType, err.Error())

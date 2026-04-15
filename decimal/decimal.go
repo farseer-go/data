@@ -77,6 +77,11 @@ func (d Decimal) Round(scale int) Decimal {
 	return Decimal{source: d.source.Round(scale)}
 }
 
+// 切除整数小数位数
+func (d Decimal) Trunc(scale int) Decimal {
+	return Decimal{source: d.source.Trunc(scale)}
+}
+
 // Ceil 返回大于或等于 d 的最近整数值。
 func (d Decimal) Ceil() Decimal {
 	return Decimal{source: d.source.Ceil(0)}
@@ -118,6 +123,10 @@ func (d Decimal) String() string {
 	//data := d.removeSufferZero()
 	//return *(*string)(unsafe.Pointer(&data))
 	return string(d.removeSufferZero())
+}
+
+func (d Decimal) Byte() []byte {
+	return d.removeSufferZero()
 }
 
 // StringFixed 四舍五入

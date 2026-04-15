@@ -109,6 +109,12 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 		receiver.err = receiver.ormClient.AutoMigrate(&entity)
 	}
 	if receiver.err != nil {
+		errMsg := receiver.err.Error()
+		// 忽略索引重复的错误.(gorm的bug)
+		if strings.Contains(errMsg, "check that column/key exists") {
+			receiver.err = nil
+			return
+		}
 		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
 	}
 }
@@ -135,7 +141,13 @@ func (receiver *TableSet[Table]) CreateIndex() {
 			sqlScript := dataDriver.CreateIndex(receiver.tableName, idxName, idxFields)
 			// 执行
 			if receiver.err = receiver.ormClient.Exec(sqlScript).Error; receiver.err != nil {
-				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, receiver.err.Error()))
+				errMsg := receiver.err.Error()
+				// 忽略索引重复的错误.(gorm的bug)
+				if strings.Contains(errMsg, "Duplicate key name") {
+					receiver.err = nil
+					continue
+				}
+				panic(fmt.Sprintf("创建索引，表：%s，索引名称：%s 时，出错：%s", receiver.tableName, idxName, errMsg))
 			}
 		}
 	}

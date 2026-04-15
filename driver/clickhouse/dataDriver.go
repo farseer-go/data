@@ -2,7 +2,6 @@ package data_clickhouse
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 
 	"github.com/farseer-go/data"
@@ -35,10 +34,11 @@ func (receiver *dataDriver) GetDriver(connectionString string) gorm.Dialector {
 
 func (receiver *dataDriver) CreateIndex(tableName string, idxName string, idxField data.IdxField) string {
 	var b bytes.Buffer
-	b.WriteString("CREATE ")
-	if idxField.IsUNIQUE {
-		b.WriteString("UNIQUE ")
-	}
-	b.WriteString(fmt.Sprintf("INDEX %s ON %s (%s);", idxName, tableName, idxField.Fields))
+	b.WriteString("ALTER TABLE ")
+	b.WriteString(tableName)
+	b.WriteString(" ADD INDEX ")
+	b.WriteString(idxName)
+	b.WriteString(" ")
+	b.WriteString(idxField.Fields)
 	return b.String()
 }

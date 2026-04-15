@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/farseer-go/fs/parse"
 	"gorm.io/gorm"
 )
 
@@ -19,15 +20,18 @@ func newClickhouse[Table any](tableSet *TableSet[Table]) *mergeTreeSet {
 	}
 }
 
-// OptimizeFinalByPartition 手动执行合并
-func (receiver *mergeTreeSet) OptimizeFinalByPartition(partition string) (int64, error) {
-	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, partition))
-	return result.RowsAffected, result.Error
-}
+// OptimizeFinal 手动执行合并（支持 string 或 time.Time 类型）
+func (receiver *mergeTreeSet) OptimizeFinal(partition any) (int64, error) {
+	var p string
+	switch v := partition.(type) {
+	case time.Time:
+		p = v.Format("200601")
+	default:
+		p = parse.ToString(v)
+	}
 
-// OptimizeFinal 手动执行合并
-func (receiver *mergeTreeSet) OptimizeFinal(partition time.Time) (int64, error) {
-	result := receiver.ormClient.Exec(fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, partition.Format("200601")))
+	query := fmt.Sprintf("OPTIMIZE TABLE %s PARTITION '%s' FINAL;", receiver.tableName, p)
+	result := receiver.ormClient.Exec(query)
 	return result.RowsAffected, result.Error
 }
 
