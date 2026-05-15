@@ -78,14 +78,11 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	ts.dbName = receiver.dbName
 	ts.nameReplacer = receiver.nameReplacer
 
-	migrate, exists := param["migrate"]
-	if !exists {
-		exists = receiver.dbContext.dbConfig.migrated
-		migrate = receiver.dbContext.dbConfig.Migrate
-	}
-	if exists {
+	// 存在此标记,则需要创建表/索引
+	_, exists := param["migrate"]
+	if exists || receiver.dbContext.dbConfig.migrated {
 		// 创建表
-		ts.CreateTable(migrate)
+		ts.CreateTable(param)
 		// 创建索引
 		ts.CreateIndex()
 	}
@@ -94,11 +91,20 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 // CreateTable 创建表（如果不存在）
 // 相关链接：https://gorm.io/zh_CN/docs/migration.html
 // 相关链接：https://gorm.io/zh_CN/docs/indexes.html
-func (receiver *TableSet[Table]) CreateTable(engine string) {
+func (receiver *TableSet[Table]) CreateTable(param map[string]string) {
 	var entity Table
-	if engine != "" {
+
+	// 1. 设置引擎
+	if engine := param["engine"]; engine != "" {
 		receiver.ormClient = receiver.ormClient.Set("gorm:table_options", "ENGINE="+engine)
 	}
+
+	// 2. 设置集群 (关键修正：使用官方支持的标签)
+	if cluster := param["cluster"]; cluster != "" {
+		// 驱动会自动处理 ON CLUSTER 的位置
+		receiver.ormClient = receiver.ormClient.Set("gorm:table_cluster_options", fmt.Sprintf("ON CLUSTER '%s'", cluster))
+	}
+
 	// 如果继承了IMigrator，则使用自定义的SQL来创建表
 	if mig, exists := any(&entity).(IMigratorCreate); exists {
 		if !receiver.ormClient.Migrator().HasTable(receiver.tableName) {
@@ -113,9 +119,10 @@ func (receiver *TableSet[Table]) CreateTable(engine string) {
 		// 忽略索引重复的错误.(gorm的bug)
 		if strings.Contains(errMsg, "check that column/key exists") {
 			receiver.err = nil
+			flog.Warning(errMsg)
 			return
 		}
-		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, receiver.err.Error()))
+		panic(fmt.Sprintf("创建或修改表：%s 时，出错：%s", receiver.tableName, errMsg))
 	}
 }
 
