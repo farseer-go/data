@@ -92,7 +92,7 @@ func NewInternalContext(configString string) *internalContext {
 	config := configure.ParseString[dbConfig](configString)
 	config.keyName = configString // 先默认为连接字符串，如果上游是RegisterInternalContext函数，则会覆盖（如果不设置默认值，则不会复用连接字符串）
 	config.DataType = strings.ToLower(config.DataType)
-	config.migrated = strings.Contains(configString, "Migrate=")
+	config.migrated = strings.Contains(strings.ToLower(configString), "migrate")
 
 	// 获取数据库名称
 	switch config.DataType {
