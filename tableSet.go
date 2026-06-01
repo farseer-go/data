@@ -79,13 +79,19 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	ts.nameReplacer = receiver.nameReplacer
 
 	// 存在此标记,则需要创建表/索引
-	_, exists := param["migrate"]
-	if exists || receiver.dbContext.dbConfig.migrated {
+	// _, exists := param["migrate"]
+	// if exists || receiver.dbContext.dbConfig.migrated {
+	// 版本门控：标签声明的版本号与系统表记录一致时跳过迁移（version为空时强制迁移，兼容旧行为）
+	version := param["version"]
+	if receiver.dbContext.needSchemaMigrate(receiver.tableName, version) {
 		// 创建表
 		ts.CreateTable(param)
 		// 创建索引
 		ts.CreateIndex()
+		// 记录本次迁移后的版本号，供下次启动比对
+		receiver.dbContext.recordSchemaMigrate(receiver.tableName, version, reflect.TypeOf(*new(Table)).Name())
 	}
+	//}
 }
 
 // CreateTable 创建表（如果不存在）
