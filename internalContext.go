@@ -35,12 +35,26 @@ type IInternalContext interface {
 	ExecuteSqlToValue(field any, sql string, values ...any) (int64, error)
 	// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
 	ExecuteSqlToMap(m any, sql string, values ...any) (int64, error)
+
+	// ExecuteSql 执行自定义SQL
+	ExecuteSql2(sql string, values ...any) (int64, error)
+	// ExecuteSqlToResult 返回结果(执行自定义SQL)
+	ExecuteSqlToResult2(arrayOrEntity any, sql string, values ...any) (int64, error)
+	// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
+	ExecuteSqlToValue2(field any, sql string, values ...any) (int64, error)
+	// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+	ExecuteSqlToMap2(m any, sql string, values ...any) (int64, error)
 	// GetDatabaseList 获取数据库列表
 	GetDatabaseList() ([]string, error)
 	// GetTableList 获取所有表
 	GetTableList(database string) ([]string, error)
 	// 获取数据库时间
 	Now() (time.Time, error)
+
+	// 判断指定表是否需要执行自动建表/建索引
+	NeedSchemaMigrate(tableName string, version string) bool
+	// 记录某张表本次迁移后的版本号，供下次启动比对
+	RecordSchemaMigrate(tableName, version, poType string)
 }
 
 type IGetInternalContext interface {
@@ -237,9 +251,36 @@ func (receiver *internalContext) ExecuteSql(sql string, values ...any) (int64, e
 	return result.RowsAffected, result.Error
 }
 
+// ExecuteSql 执行自定义SQL
+func (receiver *internalContext) ExecuteSql2(sql string, values ...any) (int64, error) {
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSql，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+	result := original.Exec(sql, values...)
+	return result.RowsAffected, result.Error
+}
+
 // ExecuteSqlToResult 返回结果(执行自定义SQL)
 func (receiver *internalContext) ExecuteSqlToResult(arrayOrEntity any, sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToResult，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...)
+	result.Find(arrayOrEntity)
+	if result.Error != nil {
+		flog.Errorf("执行ExecuteSqlToResult时出现异常,sql=%s,err=%s", sql, result.Error.Error())
+	}
+	return result.RowsAffected, result.Error
+}
+
+// ExecuteSqlToResult 返回结果(执行自定义SQL)
+func (receiver *internalContext) ExecuteSqlToResult2(arrayOrEntity any, sql string, values ...any) (int64, error) {
 	original, err := receiver.Original()
 	if err != nil {
 		flog.Errorf("执行ExecuteSqlToResult，连接数据库时失败,err=%s", err.Error())
@@ -267,9 +308,57 @@ func (receiver *internalContext) ExecuteSqlToValue(field any, sql string, values
 	return result.RowsAffected, result.Error
 }
 
+// ExecuteSqlToValue 返回单个字段值(执行自定义SQL)
+func (receiver *internalContext) ExecuteSqlToValue2(field any, sql string, values ...any) (int64, error) {
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToValue，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...).Scan(&field)
+	return result.RowsAffected, result.Error
+}
+
 // GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
 func (receiver *internalContext) ExecuteSqlToMap(m any, sql string, values ...any) (int64, error) {
 	sql = receiver.nameReplacer.Replace(sql)
+	original, err := receiver.Original()
+	if err != nil {
+		flog.Errorf("执行ExecuteSqlToMap，连接数据库时失败,err=%s", err.Error())
+		return 0, err
+	}
+
+	result := original.Raw(sql, values...)
+	rows, _ := result.Rows()
+	if rows == nil {
+		return result.RowsAffected, result.Error
+	}
+	mapSliceVal := reflect.ValueOf(m).Elem()
+	mapType, isMap := types.IsMap(mapSliceVal)
+	keyType := mapType.Key()
+	valType := mapType.Elem()
+
+	if !isMap {
+		panic("mapSlice入参必须为map类型")
+	}
+	mapSliceVal.Set(reflect.MakeMap(mapType))
+
+	defer rows.Close()
+	for rows.Next() {
+		var k, v any
+		_ = rows.Scan(&k, &v)
+		k = parse.ConvertValue(k, keyType)
+		v = parse.ConvertValue(v, valType)
+
+		mapSliceVal.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+	}
+
+	return result.RowsAffected, result.Error
+}
+
+// GetMap 获取key value，然后将结果保存到m字段，m字段为map[xx]xxx
+func (receiver *internalContext) ExecuteSqlToMap2(m any, sql string, values ...any) (int64, error) {
 	original, err := receiver.Original()
 	if err != nil {
 		flog.Errorf("执行ExecuteSqlToMap，连接数据库时失败,err=%s", err.Error())

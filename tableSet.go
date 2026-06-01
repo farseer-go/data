@@ -83,13 +83,13 @@ func (receiver *TableSet[Table]) Init(dbContext *internalContext, param map[stri
 	// if exists || receiver.dbContext.dbConfig.migrated {
 	// 版本门控：标签声明的版本号与系统表记录一致时跳过迁移（version为空时强制迁移，兼容旧行为）
 	version := param["version"]
-	if receiver.dbContext.needSchemaMigrate(receiver.tableName, version) {
+	if receiver.dbContext.NeedSchemaMigrate(receiver.tableName, version) {
 		// 创建表
 		ts.CreateTable(param)
 		// 创建索引
 		ts.CreateIndex()
 		// 记录本次迁移后的版本号，供下次启动比对
-		receiver.dbContext.recordSchemaMigrate(receiver.tableName, version, reflect.TypeOf(*new(Table)).Name())
+		receiver.dbContext.RecordSchemaMigrate(receiver.tableName, version, reflect.TypeOf(*new(Table)).Name())
 	}
 	//}
 }
@@ -723,7 +723,7 @@ func (receiver *TableSet[Table]) InsertList(lst collections.List[Table], batchSi
 	if receiver.dbContext.dbConfig.DataType == "clickhouse" {
 		// 在 ClickHouse 驱动中，这个 Transaction 块不会发送真正的 SQL BEGIN, 它只是在驱动层开启一个 Block 容器，确保执行完后自动触发 Flush
 		session := receiver.getOrCreateSession()
-		err = session.getClient().Debug().Transaction(func(tx *gorm.DB) error { // Transaction必须这么使用,否则数据库查不到数据
+		err = session.getClient().Transaction(func(tx *gorm.DB) error { // Transaction必须这么使用,否则数据库查不到数据
 			result := tx.CreateInBatches(lst.ToArray(), lst.Count()) // 不能使用batchSize,会出现code: 101, message: Unexpected packet Query received from client
 			if result.Error != nil {
 				return result.Error

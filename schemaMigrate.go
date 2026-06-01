@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/farseer-go/fs/flog"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -90,9 +91,9 @@ func (receiver *internalContext) ensureSchemaMigrateLoaded() {
 	schemaMigrateLoaded[key] = true
 }
 
-// needSchemaMigrate 判断指定表是否需要执行自动建表/建索引
+// NeedSchemaMigrate 判断指定表是否需要执行自动建表/建索引
 // version为空时强制迁移（保持旧行为）；否则与系统表记录的版本一致则跳过
-func (receiver *internalContext) needSchemaMigrate(tableName string, version string) bool {
+func (receiver *internalContext) NeedSchemaMigrate(tableName string, version string) bool {
 	// 空版本：强制迁移，完全兼容历史标签 data:"migrate"
 	if version == "" {
 		return true
@@ -114,8 +115,8 @@ func (receiver *internalContext) needSchemaMigrate(tableName string, version str
 	return true
 }
 
-// recordSchemaMigrate 记录某张表本次迁移后的版本号，供下次启动比对
-func (receiver *internalContext) recordSchemaMigrate(tableName, version, poType string) {
+// RecordSchemaMigrate 记录某张表本次迁移后的版本号，供下次启动比对
+func (receiver *internalContext) RecordSchemaMigrate(tableName, version, poType string) {
 	// 空版本无需记录（每次都强制迁移）
 	if version == "" {
 		return
@@ -140,7 +141,14 @@ func (receiver *internalContext) recordSchemaMigrate(tableName, version, poType 
 
 	if receiver.dbConfig.DataType == "clickhouse" {
 		// ClickHouse：直接追加一行，由ReplacingMergeTree+FINAL保证下次读到最新
-		err = db.Table(schemaMigrateTableName).Create(&po).Error
+		err = db.Table(schemaMigrateTableName).Transaction(func(tx *gorm.DB) error { // Transaction必须这么使用,否则数据库查不到数据
+			result := tx.Create(&po) // 不能使用batchSize,会出现code: 101, message: Unexpected packet Query received from client
+			if result.Error != nil {
+				return result.Error
+			}
+			return nil
+		})
+		//err = db.Table(schemaMigrateTableName).Create(&po).Error
 	} else {
 		// 其余驱动：按主键(key_name,table_name)做upsert
 		err = db.Table(schemaMigrateTableName).Clauses(clause.OnConflict{
