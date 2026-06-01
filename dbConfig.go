@@ -16,7 +16,6 @@ type dbConfig struct {
 	ConnectionString string
 	databaseName     string // 数据库名称
 	Migrate          string // code first
-	migrated         bool   // 是否包含自动创建数据库
 }
 
 // GetDriver 获取对应驱动
