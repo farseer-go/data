@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/farseer-go/fs/flog"
+	"github.com/farseer-go/fs/parse"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -96,7 +97,7 @@ func (receiver *internalContext) ensureSchemaMigrateLoaded() {
 func (receiver *internalContext) NeedSchemaMigrate(tableName string, version string) bool {
 	// 空版本：强制迁移，完全兼容历史标签 data:"migrate"
 	if version == "" {
-		return true
+		return false
 	}
 
 	schemaMigrateLock.Lock()
@@ -107,8 +108,16 @@ func (receiver *internalContext) NeedSchemaMigrate(tableName string, version str
 
 	// 已记录的版本与当前声明版本一致 -> 跳过迁移
 	if versions, exists := schemaMigrateCache[receiver.dbConfig.keyName]; exists {
-		if recorded, ok := versions[tableName]; ok && recorded == version {
-			return false
+		// 存在这个版本记录
+		if recorded, ok := versions[tableName]; ok {
+			// 如果版本号是数字,则可以支持,如果数据库大于本地,则不用变更
+			if recordedint := parse.ToInt(recorded); recordedint > 0 && recordedint >= parse.ToInt(version) {
+				return false
+			}
+			// 非数字,则只能比较相等
+			if recorded == version {
+				return false
+			}
 		}
 	}
 	// 无记录或版本不一致 -> 需要迁移
