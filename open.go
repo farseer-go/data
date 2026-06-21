@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/farseer-go/data/loggers"
-	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/trace"
 	"gorm.io/gorm"
 )
@@ -22,7 +21,7 @@ func open(dbConfig *dbConfig) (*gorm.DB, error) {
 	if !exists {
 		lock.Lock()
 		defer lock.Unlock()
-		traceManager := container.Resolve[trace.IManager]()
+		traceManager := trace.Manager()
 		traceDatabase := traceManager.TraceDatabaseOpen(dbConfig.databaseName, dbConfig.ConnectionString)
 		// 连接数据库参考：https://gorm.io/zh_CN/docs/connecting_to_the_database.html
 		// Data Source ClientName 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name

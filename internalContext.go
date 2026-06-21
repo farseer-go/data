@@ -185,7 +185,7 @@ func (receiver *internalContext) Transaction(executeFn func(), isolationLevels .
 	}
 
 	var err error
-	traceHand := container.Resolve[trace.IManager]().TraceHand("开启事务")
+	traceHand := trace.Manager().TraceHand("开启事务")
 	defer func() { traceHand.End(err) }()
 
 	// 开启事务

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/farseer-go/fs/container"
 	"github.com/farseer-go/fs/core"
 	"github.com/farseer-go/fs/trace"
 )
@@ -19,7 +18,7 @@ type connectionChecker struct{}
 // 实现IConnectionChecker接口
 func (c *connectionChecker) Check(configString string) (bool, error) {
 	// 取消链路
-	container.Resolve[trace.IManager]().Ignore()
+	trace.Manager().Ignore()
 
 	if configString == "" {
 		return false, fmt.Errorf("连接字符串不能为空")
